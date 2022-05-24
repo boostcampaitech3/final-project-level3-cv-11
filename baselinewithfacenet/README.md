@@ -1,8 +1,8 @@
 # Facenet - pytorch 
 
 ## 1. Installation 
-Refenrence : [FaceNet-Pytorch](https://github.com/timesler/facenet-pytorch)
-```
+Reference : [FaceNet-Pytorch](https://github.com/timesler/facenet-pytorch)
+```shell
 # With pip:
 pip install facenet-pytorch
 
@@ -14,7 +14,7 @@ docker run -it --rm timesler/jupyter-dl-gpu pip install facenet-pytorch && ipyth
 ```
 
 Use it like... 
-```
+```python
 from facenet_pytorch import MTCNN, InceptionResnetV1
 
 # If required, create a face detection pipeline using MTCNN:
@@ -26,7 +26,7 @@ resnet = InceptionResnetV1(pretrained='vggface2').eval()
 
 If error like this appears.. 
 `RuntimeError: Couldn't load custom C++ ops. This can happen if your Pytorch and torchvision versions are incompatible ... `
-```
+```shell
 # if python 3.8
 pip uninstall torch torchvision 
 pip install torch==1.7.1 torchvision==0.8.2
