@@ -8,9 +8,7 @@ from detection import mtcnn_detection, mtcnn_get_embeddings, mtcnn_recognition
 import torch 
 
 
-def ProcessImage(img, bbox_thr, recog_thr):
-    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-    print('Running on device : {}'.format(device))
+def ProcessImage(img, bbox_thr, recog_thr, device):
     # Object Detection
     # bboxes = Detection(img, bbox_thr)
     bboxes, landmarks = mtcnn_detection(img, bbox_thr, device)
@@ -20,8 +18,11 @@ def ProcessImage(img, bbox_thr, recog_thr):
     # Object Recognition
     # unknown_bboxes, face_ids = Recognition(img, bboxes, recog_thr)
     face_ids, result_probs = mtcnn_recognition(img, unknown_embeddings, recog_thr, device)
+    print(face_ids)
 
-    # img = Mosaic(img, unknown_bboxes, 3)
+    # Mosaic
+    # img = Mosaic(img, bboxes, face_ids, n=3, mode=0) 
+
     # 특정인에 bbox와 name을 보여주고 싶으면
     processed_img = DrawRectImg(img, bboxes, landmarks, face_ids)
 
@@ -31,10 +32,14 @@ def ProcessImage(img, bbox_thr, recog_thr):
 
 def main(args):
     img = Image.open(args['IMAGE_DIR'])
+    # img = Image.open('../data/dest_images/kakao3.jpeg')
+
+    device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    print('Running on device : {}'.format(device))
 
     img = ProcessImage(img,
                        args['BBOX_THRESHOLD'],
-                       args['RECOG_THRESHOLD'])
+                       args['RECOG_THRESHOLD'], device)
 
     img.save(args['SAVE_DIR']+'/output.png', 'png')
 

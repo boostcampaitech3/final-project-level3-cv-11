@@ -1,0 +1,6 @@
+*/__pycache__/*
+*/detected/*
+*/annotated/*
+*/*.pyc
+*/video.mp4
+data/*

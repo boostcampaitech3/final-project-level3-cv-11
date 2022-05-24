@@ -3,6 +3,7 @@ import numpy as np
 from math import ceil
 from PIL import Image, ImageDraw
 from facenet_pytorch import extract_face
+from PIL import Image 
 
 def GetFaceFeature(img):
     return []
@@ -40,33 +41,37 @@ def CropRoiImg(img, bboxes, threshold):
     return roi_imgs
 
 
-def Mosaic(img, bboxes, n, mode):
+def Mosaic(pilimg, bboxes, face_ids, n=3, mode=0):
     # filling NxN kernel's max or average value
     # img: original image
     # bboxes: mosaic target positions
     # n: kernel size
     # mode: max = 0, average = 1
     # 아직 덜 짜서 커널 사이즈에 따라 bbox 영역을 벗어나기도 함
-
+    img = np.asarray(pilimg)
     if mode == 0: # max
-        for bbox in bboxes:
+        for i, bbox in enumerate(bboxes):
+            print(bbox)
             # bbox: x, y, w, h
-            for col in range(ceil(bbox[3]/n)):
-                for row in range(ceil(bbox[2]/n)):
-                    max = np.max(img[bbox[1] + n*col:bbox[1] + n*(col+1),
-                                     bbox[0] + n*row:bbox[0] + n*(row+1)])
-                    img[bbox[1] + n*col:bbox[1] + n*(col+1),
-                        bbox[0] + n*row:bbox[0] + n*(row+1)] = max
+            if face_ids[i] == 'unknown':
+                for col in range(ceil(bbox[3]/n)):
+                    for row in range(ceil(bbox[2]/n)):
+                        max = np.max(img[bbox[1] + n*col:bbox[1] + n*(col+1),
+                                        bbox[0] + n*row:bbox[0] + n*(row+1)])
+                        img[bbox[1] + n*col:bbox[1] + n*(col+1),
+                            bbox[0] + n*row:bbox[0] + n*(row+1)] = max
     elif mode == 1: # average
-        for bbox in bboxes:
+        for i, bbox in enumerate(bboxes):
             # bbox: x, y, w, h
-            for col in range(ceil(bbox[3]/n)):
-                for row in range(ceil(bbox[2]/n)):
-                    mean = np.mean(img[bbox[1] + n*col:bbox[1] + n*(col+1),
-                                      bbox[0] + n*row:bbox[0] + n*(row+1)])
-                    img[bbox[1] + n*col:bbox[1] + n*(col+1),
-                        bbox[0] + n*row:bbox[0] + n*(row+1)] = mean
-    return img
+            if face_ids[i] == 'unknown':
+                for col in range(ceil(bbox[3]/n)):
+                    for row in range(ceil(bbox[2]/n)):
+                        mean = np.mean(img[bbox[1] + n*col:bbox[1] + n*(col+1),
+                                        bbox[0] + n*row:bbox[0] + n*(row+1)])
+                        img[bbox[1] + n*col:bbox[1] + n*(col+1),
+                            bbox[0] + n*row:bbox[0] + n*(row+1)] = mean
+    pilimg = Image.fromarray(img)
+    return pilimg
 
 
 def DrawRectImg(img, bboxes, landmarks, face_ids=[]):

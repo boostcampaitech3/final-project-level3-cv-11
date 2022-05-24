@@ -17,8 +17,8 @@ def collate_fn(x):
 
 def mtcnn_detection(img, threshold, device):
     mtcnn = MTCNN(keep_all=True)
-    boxes, probs, points = mtcnn.detect(img, landmarks=True)
-    return boxes, points
+    bboxes, probs, points = mtcnn.detect(img, landmarks=True)
+    return bboxes, points
 
 def mtcnn_get_embeddings(img, bboxes, device, save_path=None):
     mtcnn = MTCNN(
