@@ -7,7 +7,7 @@ class Args(object):
     parser.add_argument('--bbox_thrs', type=int, default=30, help='Threshold of bounding box')
     parser.add_argument('--recog_thrs', type=float, default=0.8, help='Threshold of recognition')
     parser.add_argument('--is_pil', type=bool, default=True, help='is PIL')
-    parser.add_argument('--detector', type=str, default='mtcnn', help='Detection model')
+    parser.add_argument('--detector', type=str, default='mtcnn1', help='Detection model')
     parser.add_argument('--num_workers', type=int, default=4, help='Number of workers')
     parser.add_argument('--random_seed', type=int, default=42, help='Random seed for data split')
     parser.add_argument('--device', type=str, default="cuda" if torch.cuda.is_available() else "cpu")
