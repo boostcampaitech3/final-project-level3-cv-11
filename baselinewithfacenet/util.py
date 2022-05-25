@@ -41,37 +41,39 @@ def CropRoiImg(img, bboxes, threshold):
     return roi_imgs
 
 
-def Mosaic(pilimg, bboxes, face_ids, n=3, mode=0):
+def Mosaic(img, bboxes, face_ids, n, isPIL = False):
     # filling NxN kernel's max or average value
     # img: original image
     # bboxes: mosaic target positions
     # n: kernel size
-    # mode: max = 0, average = 1
-    # 아직 덜 짜서 커널 사이즈에 따라 bbox 영역을 벗어나기도 함
-    img = np.asarray(pilimg)
-    if mode == 0: # max
-        for i, bbox in enumerate(bboxes):
-            print(bbox)
-            # bbox: x, y, w, h
-            if face_ids[i] == 'unknown':
-                for col in range(ceil(bbox[3]/n)):
-                    for row in range(ceil(bbox[2]/n)):
-                        max = np.max(img[bbox[1] + n*col:bbox[1] + n*(col+1),
-                                        bbox[0] + n*row:bbox[0] + n*(row+1)])
-                        img[bbox[1] + n*col:bbox[1] + n*(col+1),
-                            bbox[0] + n*row:bbox[0] + n*(row+1)] = max
-    elif mode == 1: # average
-        for i, bbox in enumerate(bboxes):
-            # bbox: x, y, w, h
-            if face_ids[i] == 'unknown':
-                for col in range(ceil(bbox[3]/n)):
-                    for row in range(ceil(bbox[2]/n)):
-                        mean = np.mean(img[bbox[1] + n*col:bbox[1] + n*(col+1),
-                                        bbox[0] + n*row:bbox[0] + n*(row+1)])
-                        img[bbox[1] + n*col:bbox[1] + n*(col+1),
-                            bbox[0] + n*row:bbox[0] + n*(row+1)] = mean
-    pilimg = Image.fromarray(img)
-    return pilimg
+
+    if isPIL:
+        for bbox, face_id in zip(bboxes, face_ids):
+            if face_id == 'unknown':
+                bbox = np.round(bbox).astype(int)
+                roi = img.crop(bbox)
+                roi = roi.resize(((bbox[2] - bbox[0])//n,
+                                (bbox[3] - bbox[1])//n),
+                                Image.NEAREST)
+                roi = roi.resize(((bbox[2] - bbox[0]),
+                                (bbox[3] - bbox[1])),
+                                Image.NEAREST)
+                img.paste(roi, bbox)
+    else:
+        for bbox, face_id in zip(bboxes, face_ids):
+            if face_id == 'unknown':
+                roi = img[bbox[1]:bbox[3], bbox[0]:bbox[2]] 
+                # 1/n 비율로 축소
+                roi = cv2.resize(roi, ((bbox[2] - bbox[0])//n,
+                                    (bbox[3] - bbox[1])//n),
+                                    interpolation=cv2.INTER_AREA)
+                # 원래 크기로 확대
+                roi = cv2.resize(roi, ((bbox[2] - bbox[0]),
+                                    (bbox[3] - bbox[1])),
+                                    interpolation=cv2.INTER_NEAREST)
+                img[bbox[1]:bbox[3], bbox[0]:bbox[2]] = roi
+
+    return img
 
 
 def DrawRectImg(img, bboxes, landmarks, face_ids=[]):

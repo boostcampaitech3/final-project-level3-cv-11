@@ -21,7 +21,7 @@ def ProcessImage(img, bbox_thr, recog_thr, device):
     print(face_ids)
 
     # Mosaic
-    # img = Mosaic(img, bboxes, face_ids, n=3, mode=0) 
+    img = Mosaic(img, bboxes, face_ids, n=10, isPIL= True) 
 
     # 특정인에 bbox와 name을 보여주고 싶으면
     processed_img = DrawRectImg(img, bboxes, landmarks, face_ids)
