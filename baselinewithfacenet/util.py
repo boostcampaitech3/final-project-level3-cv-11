@@ -62,6 +62,7 @@ def Mosaic(img, bboxes, face_ids, n, isPIL = False):
     else:
         for bbox, face_id in zip(bboxes, face_ids):
             if face_id == 'unknown':
+                bbox = np.round(bbox).astype(int)
                 roi = img[bbox[1]:bbox[3], bbox[0]:bbox[2]] 
                 # 1/n 비율로 축소
                 roi = cv2.resize(roi, ((bbox[2] - bbox[0])//n,
