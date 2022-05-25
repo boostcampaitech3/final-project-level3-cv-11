@@ -17,8 +17,8 @@ def collate_fn(x):
 
 def mtcnn_detection(img, threshold, device):
     mtcnn = MTCNN(keep_all=True)
-    bboxes, probs, points = mtcnn.detect(img, landmarks=True)
-    return bboxes, points
+    bboxes, probs = mtcnn.detect(img, landmarks=False)
+    return bboxes
 
 def mtcnn_get_embeddings(img, bboxes, device, save_path=None):
     mtcnn = MTCNN(
@@ -61,7 +61,7 @@ def update_face_db(known_images_path, device):
         face_db[names[i]] = eb
     with open(face_db_path, "wb") as f:
         pickle.dump(face_db, f)
-    print('finished faceDatabase transform!')
+    print('finished faceDatabase transform!', len(face_db.items()))
     return face_db
 
 
