@@ -4,3 +4,5 @@
 */*.pyc
 */video.mp4
 data/*
+*/.ipynb_checkpoints/*
+__pycache__/

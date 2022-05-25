@@ -15,19 +15,13 @@ workers = 0 if os.name == 'nt' else 4
 def collate_fn(x):
     return x[0]
 
-def mtcnn_detection(img, threshold, device):
-    mtcnn = MTCNN(keep_all=True)
-    bboxes, probs = mtcnn.detect(img, landmarks=False)
+def mtcnn_detection(model, img, device):
+    bboxes, probs = model.detect(img, landmarks=False)
     return bboxes
 
-def mtcnn_get_embeddings(img, bboxes, device, save_path=None):
-    mtcnn = MTCNN(
-        image_size=160, margin=0, min_face_size=20,
-        thresholds = [0.6, 0.7, 0.7], factor=0.709, post_process=True, 
-        device=device, keep_all=True
-    )
-    resnet = InceptionResnetV1(pretrained='vggface2').eval().to(device)
+def mtcnn_get_embeddings(mtcnn, resnet, img, bboxes, device, save_path=None):
     faces = mtcnn.extract(img, bboxes, save_path)
+    print(faces.shape)
     faces = faces.to(device)
     unknown_embeddings = resnet(faces).detach().cpu()
     return faces, unknown_embeddings
@@ -75,10 +69,9 @@ def load_face_db(known_images_path, face_db_path, device):
     print('finished load face_data!')
     return face_db
 
-def mtcnn_recognition(img, unknown_embeddings, recog_thr, device) : 
+def mtcnn_recognition(img, face_db, unknown_embeddings, recog_thr, device) : 
     face_ids = []
     probs = []
-    face_db = load_face_db("../data/test_images", "./face_db", device)
     for i in range(len(unknown_embeddings)):
         result_dict = {}
         eb = unknown_embeddings[i]
