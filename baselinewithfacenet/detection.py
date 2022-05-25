@@ -21,7 +21,7 @@ def mtcnn_detection(model, img, device):
 
 def mtcnn_get_embeddings(mtcnn, resnet, img, bboxes, device, save_path=None):
     faces = mtcnn.extract(img, bboxes, save_path)
-    print(faces.shape)
+    # print(faces.shape)
     faces = faces.to(device)
     unknown_embeddings = resnet(faces).detach().cpu()
     return faces, unknown_embeddings

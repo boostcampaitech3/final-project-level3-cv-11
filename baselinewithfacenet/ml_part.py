@@ -14,7 +14,8 @@ def Detection(img, args, model_args):
     else:
         bboxes = retinaface_detection(model_args['Detection'], img, device)
 
-    print(bboxes)
+    if args['DEBUG_MODE']:
+        print(bboxes)
     
     # =============================
 
@@ -35,15 +36,15 @@ def Recognition(img, bboxes, args, model_args):
     faces, unknown_embeddings = mtcnn_get_embeddings(model_args['Mtcnn'],
                                                      model_args['Recognition'],
                                                      img, bboxes, device)
-    # if debug_mode:
-    print(faces.shape)
+    if args['DEBUG_MODE']:
+        print(faces.shape)
 
     face_ids, result_probs = mtcnn_recognition(img, model_args['Face_db'],
                                             unknown_embeddings,
                                             args['RECOG_THRESHOLD'], device)
 
-    # if debug_mode:
-    print(face_ids)
+    if args['DEBUG_MODE']:
+        print(face_ids)
     # =============================
 
     return face_ids
