@@ -7,7 +7,7 @@ class Args(object):
     parser.add_argument('--image_dir', default="../data/dest_images/findobama/twopeople.jpeg", help='Directory to image')
     parser.add_argument('--bbox_thrs', type=int, default=30, help='Threshold of bounding box')
     parser.add_argument('--recog_thrs', type=float, default=0.8, help='Threshold of recognition')
-    parser.add_argument('--is_pil', type=bool, default=True, help='is PIL')
+    parser.add_argument('--read_mode', type=int, default=2, help='cv2: 0, PIL: 1, torchvision: 2')
     parser.add_argument('--detector', type=str, default='mtcnn', help='Detection model')
     parser.add_argument('--num_workers', type=int, default=4, help='Number of workers')
     parser.add_argument('--random_seed', type=int, default=42, help='Random seed for data split')
@@ -23,7 +23,7 @@ class Args(object):
         "IMAGE_DIR": parse.image_dir, 
         "BBOX_THRESHOLD": parse.bbox_thrs, 
         "RECOG_THRESHOLD": parse.recog_thrs,
-        "IS_PIL": parse.is_pil,
+        "READ_MODE": parse.read_mode,
         "DETECTOR": parse.detector,
         "NUM_WORKERS": parse.num_workers,
         "RANDOM_SEED": parse.random_seed,

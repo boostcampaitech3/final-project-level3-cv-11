@@ -13,6 +13,7 @@ from retinaface_utils.data.config import cfg_mnet
 import ml_part as ML
 
 import torch
+import torchvision
 from facenet_pytorch import MTCNN, InceptionResnetV1
 
 
@@ -57,21 +58,30 @@ def init(args):
 
 
 def ProcessImage(img, args, model_args):
-    isPIL = args['IS_PIL']
+    read_mode = args['READ_MODE']
 
     # Object Detection
     bboxes = ML.Detection(img, args, model_args)
     if bboxes is None:
+        # H W C -> C H W
+        # img = torch.permute(img, (2, 0, 1))
+        img = img.numpy()
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         return img
 
     # Object Recognition
     face_ids = ML.Recognition(img, bboxes, args, model_args)
 
+    if args['READ_MODE'] != 0: # cv2, torchvision
+        if read_mode == 2: # torchvision
+            img = img.numpy()
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
     # Mosaic
-    img = Mosaic(img, bboxes, face_ids, n=10, isPIL= isPIL)
+    img = Mosaic(img, bboxes, face_ids, n=10, read_mode= read_mode)
 
     # 특정인에 bbox와 name을 보여주고 싶으면
-    processed_img = DrawRectImg(img, bboxes, face_ids, isPIL= isPIL)
+    processed_img = DrawRectImg(img, bboxes, face_ids, read_mode= read_mode)
 
     return processed_img
     # return img
@@ -80,37 +90,70 @@ def ProcessImage(img, args, model_args):
 def main(args):
     model_args = init(args)
 
+    # =================== Image =======================
     if args['PROCESS_TARGET'] == 'Image':
-        # img = Image.open(args['IMAGE_DIR'])
-        img = Image.open('../data/dest_images/findobama/twopeople.jpeg')
-        # img = cv2.imread('../data/dest_images/findobama/twopeople.jpeg') # CV ver.
+        if args['READ_MODE'] == 0: # PIL
+            img = Image.open('../data/dest_images/findobama/twopeople.jpeg')
+        else: # cv2
+            img = cv2.imread('../data/dest_images/findobama/twopeople.jpeg') # CV ver.
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
         img = ProcessImage(img, args, model_args)
 
-        img.save(args['SAVE_DIR']+'/output.png', 'png') 
-        # cv2.imwrite(args['SAVE_DIR'] + '/output1.jpg', img) # CV ver.
+        if args['READ_MODE'] == 0: # PIL
+            img.save(args['SAVE_DIR']+'/output.png', 'png') 
+        else: # cv2
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+            cv2.imwrite(args['SAVE_DIR'] + '/output1.jpg', img) # CV ver.
+    # =================== Image =======================
 
+    # =================== Video =======================
     elif args['PROCESS_TARGET'] == 'Video':
-        cap = cv2.VideoCapture('../data/dest_images/kakao/mudo.mp4')
+        video_path = '../data/dest_images/kakao/mudo.mp4'
+
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.avi', fourcc, 24.0, (1280,720))
+        out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, 24.0, (1280, 720))
 
         start = time()
-        while True:
-            ret, frame = cap.read()
-            if ret:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                img = Image.fromarray(frame)
+
+        if args['READ_MODE'] != 2: # PIL, cv2
+            cap = cv2.VideoCapture(video_path)
+            while True:
+                ret, frame = cap.read()
+                if ret:
+                    img = frame
+                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    if args['READ_MODE'] == 0: # PIL
+                        img = Image.fromarray(frame)
+
+                    img = ProcessImage(img, args, model_args)
+
+                    if args['READ_MODE'] == 0: # PIL
+                        conv_img = np.array(img)
+                    img = cv2.cvtColor(conv_img, cv2.COLOR_RGB2BGR)
+                    out.write(img)
+                    #print('done')
+                else:
+                    break
+            cap.release()
+
+        elif args['READ_MODE'] == 2: # torchvision
+            video = torchvision.io.VideoReader(video_path, stream = 'video')
+            if args['DEBUG_MODE']:
+                print(video.get_metadata())
+            video.set_current_stream('video')
+
+            for  frame in video:
+                img = frame['data']
+                # img.to(model_args['Device'])
+                img = torch.permute(img, (1, 2, 0))
                 img = ProcessImage(img, args, model_args)
-                conv_img = np.array(img)
-                img = cv2.cvtColor(conv_img, cv2.COLOR_RGB2BGR)
                 out.write(img)
-                print('done')
-            else:
-                break
-        
-        print(time() - start)
-        cap.release()
+
         out.release()
+
+        print('done.', time() - start)
+    # ====================== Video ===========================
 
 if __name__ == "__main__":
     args = Args().params
