@@ -92,7 +92,7 @@ def main(args):
     elif args['PROCESS_TARGET'] == 'Video':
         cap = cv2.VideoCapture('../data/dest_images/kakao/mudo.mp4')
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.avi', fourcc, 24.0, (1280,720))
+        out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, 24.0, (1280,720))
 
         start = time()
         while True:
@@ -107,7 +107,6 @@ def main(args):
                 print('done')
             else:
                 break
-        
         print(time() - start)
         cap.release()
         out.release()
