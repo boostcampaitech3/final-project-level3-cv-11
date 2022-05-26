@@ -112,7 +112,7 @@ def main(args):
         video_path = '../data/dest_images/kakao/mudo.mp4'
 
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.avi', fourcc, 24.0, (1280, 720))
+        out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, 24.0, (1280,720))
 
         start = time()
 
@@ -149,7 +149,6 @@ def main(args):
                 img = torch.permute(img, (1, 2, 0))
                 img = ProcessImage(img, args, model_args)
                 out.write(img)
-
         out.release()
 
         print('done.', time() - start)
