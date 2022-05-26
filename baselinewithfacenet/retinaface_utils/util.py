@@ -10,7 +10,7 @@ from retinaface_utils.data.config import cfg_mnet
 def retinaface_detection(model, img_raw, device):
     img, scale, resize = retinaface_preprocess(img_raw, device)
     loc, conf, landms = model(img)  # forward pass
-    n_dets, n_landms = retinaface_postprocess(loc, conf, landms, scale, resize, img.shape, device)
+    n_dets = retinaface_postprocess(loc, conf, landms, scale, resize, img.shape, device)
     return n_dets
 
 def retinaface_preprocess(img_raw, device):
@@ -66,6 +66,9 @@ def retinaface_postprocess(loc, conf, landms, scale, resize, img_shape, device):
     
     # ignore low scores
     inds = np.where(scores > 0.5)[0] # confidence_threshold 0.02
+    if len(inds) ==0 :
+        return None
+
     boxes = boxes[inds]
     landms = landms[inds]
     scores = scores[inds]
@@ -87,4 +90,4 @@ def retinaface_postprocess(loc, conf, landms, scale, resize, img_shape, device):
     # landms = landms[:args.keep_top_k, :]
     
     # dets = np.concatenate((dets, landms), axis=1)
-    return dets[:, :4], landms.reshape(-1, 5, 2)
+    return dets[:, :4]
