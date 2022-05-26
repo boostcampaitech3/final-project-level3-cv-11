@@ -62,13 +62,13 @@ def Get_normal_bbox(size, bboxes):
     return new_bboxes
 
 
-def Mosaic(img, bboxes, face_ids, n, read_mode):
+def Mosaic(img, bboxes, face_ids, n, input_mode):
     # filling NxN kernel's max or average value
     # img: original image
     # bboxes: mosaic target positions
     # n: kernel size
 
-    if read_mode == 0: # PIL
+    if input_mode == 0: # PIL
         for bbox, face_id in zip(bboxes, face_ids):
             if face_id == 'unknown':
                 bbox = np.round(bbox).astype(int)
@@ -101,14 +101,14 @@ def Mosaic(img, bboxes, face_ids, n, read_mode):
     return img
 
 
-def DrawRectImg(img, bboxes, face_ids, read_mode):
+def DrawRectImg(img, bboxes, face_ids, input_mode):
     rect_color = (0, 0, 255) # BGR
     rect_thickness = 2 # 이미지 사이즈에 맞게 조절해야할지도
     font_scale = 1 # 위와 동일
     font_color = (0, 0, 255) # BGR
     font_thickness = 1 # 위와 동일
     
-    if read_mode == 0: # PIL
+    if input_mode == 0: # PIL
         img_draw = img.copy()
         draw = ImageDraw.Draw(img_draw)
         i = 0

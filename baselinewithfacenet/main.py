@@ -58,7 +58,7 @@ def init(args):
 
 
 def ProcessImage(img, args, model_args):
-    read_mode = args['READ_MODE']
+    input_mode = args['INPUT_MODE']
 
     # Object Detection
     bboxes = ML.Detection(img, args, model_args)
@@ -72,16 +72,16 @@ def ProcessImage(img, args, model_args):
     # Object Recognition
     face_ids = ML.Recognition(img, bboxes, args, model_args)
 
-    if args['READ_MODE'] != 0: # cv2, torchvision
-        if read_mode == 2: # torchvision
+    if args['INPUT_MODE'] != 0: # cv2, torchvision
+        if input_mode == 2: # torchvision
             img = img.numpy()
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 
     # Mosaic
-    img = Mosaic(img, bboxes, face_ids, n=10, read_mode= read_mode)
+    img = Mosaic(img, bboxes, face_ids, n=10, input_mode= input_mode)
 
     # 특정인에 bbox와 name을 보여주고 싶으면
-    processed_img = DrawRectImg(img, bboxes, face_ids, read_mode= read_mode)
+    processed_img = DrawRectImg(img, bboxes, face_ids, input_mode= input_mode)
 
     return processed_img
     # return img
@@ -92,7 +92,7 @@ def main(args):
 
     # =================== Image =======================
     if args['PROCESS_TARGET'] == 'Image':
-        if args['READ_MODE'] == 0: # PIL
+        if args['INPUT_MODE'] == 0: # PIL
             img = Image.open('../data/dest_images/findobama/twopeople.jpeg')
         else: # cv2
             img = cv2.imread('../data/dest_images/findobama/twopeople.jpeg') # CV ver.
@@ -100,7 +100,7 @@ def main(args):
 
         img = ProcessImage(img, args, model_args)
 
-        if args['READ_MODE'] == 0: # PIL
+        if args['INPUT_MODE'] == 0: # PIL
             img.save(args['SAVE_DIR']+'/output.png', 'png') 
         else: # cv2
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
@@ -112,23 +112,23 @@ def main(args):
         video_path = '../data/dest_images/kakao/mudo.mp4'
 
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, 24.0, (1280, 720))
+        out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.avi', fourcc, 24.0, (1280, 720))
 
         start = time()
 
-        if args['READ_MODE'] != 2: # PIL, cv2
+        if args['INPUT_MODE'] != 2: # PIL, cv2
             cap = cv2.VideoCapture(video_path)
             while True:
                 ret, frame = cap.read()
                 if ret:
                     img = frame
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    if args['READ_MODE'] == 0: # PIL
+                    if args['INPUT_MODE'] == 0: # PIL
                         img = Image.fromarray(frame)
 
                     img = ProcessImage(img, args, model_args)
 
-                    if args['READ_MODE'] == 0: # PIL
+                    if args['INPUT_MODE'] == 0: # PIL
                         conv_img = np.array(img)
                     img = cv2.cvtColor(conv_img, cv2.COLOR_RGB2BGR)
                     out.write(img)
@@ -137,7 +137,7 @@ def main(args):
                     break
             cap.release()
 
-        elif args['READ_MODE'] == 2: # torchvision
+        elif args['INPUT_MODE'] == 2: # torchvision
             video = torchvision.io.VideoReader(video_path, stream = 'video')
             if args['DEBUG_MODE']:
                 print(video.get_metadata())
