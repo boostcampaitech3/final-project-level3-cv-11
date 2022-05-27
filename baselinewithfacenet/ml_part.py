@@ -1,4 +1,5 @@
 # from util import CropRoiImg
+from util import Get_normal_bbox
 
 from detection import mtcnn_detection, mtcnn_get_embeddings, mtcnn_recognition, load_face_db
 from retinaface_utils.util import retinaface_detection
@@ -16,7 +17,9 @@ def Detection(img, args, model_args):
 
     if args['DEBUG_MODE']:
         print(bboxes)
-    
+    # 이미지 범위 외로 나간 bbox값 범위 처리
+    if bboxes is not None:
+        bboxes = Get_normal_bbox(img.shape, bboxes)
     # =============================
 
     return bboxes

@@ -68,7 +68,6 @@ def retinaface_postprocess(loc, conf, landms, scale, resize, img_shape, device):
     inds = np.where(scores > 0.5)[0] # confidence_threshold 0.02
     if len(inds) ==0 :
         return None
-
     boxes = boxes[inds]
     landms = landms[inds]
     scores = scores[inds]

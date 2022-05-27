@@ -3,7 +3,9 @@ import numpy as np
 from math import ceil
 from PIL import Image, ImageDraw
 from facenet_pytorch import extract_face
-from PIL import Image 
+from PIL import Image
+import torch
+import torchvision
 
 def GetFaceFeature(img):
     return []
@@ -41,13 +43,32 @@ def CropRoiImg(img, bboxes, threshold):
     return roi_imgs
 
 
-def Mosaic(img, bboxes, face_ids, n, isPIL = False):
+def Get_normal_bbox(size, bboxes):
+    new_bboxes = None
+    for bbox in bboxes:
+        bbox = np.where(bbox > 0, bbox, 0)
+        if bbox[2] > size[1]:
+            bbox[2] = size[1]
+        if bbox[3] > size[0]:
+            bbox[3] = size[0]
+
+        # 처리한 bbox의 상태가 이상하면 제거 처리
+        if bbox[2] - bbox[0] > 0 or bbox[3] - bbox[1] > 0:
+            bbox = np.expand_dims(bbox, 0)
+            if new_bboxes is None:
+                new_bboxes = bbox
+            else:
+                new_bboxes = np.concatenate([new_bboxes, bbox])
+    return new_bboxes
+
+
+def Mosaic(img, bboxes, face_ids, n, input_mode):
     # filling NxN kernel's max or average value
     # img: original image
     # bboxes: mosaic target positions
     # n: kernel size
 
-    if isPIL:
+    if input_mode == 0: # PIL
         for bbox, face_id in zip(bboxes, face_ids):
             if face_id == 'unknown':
                 bbox = np.round(bbox).astype(int)
@@ -59,11 +80,14 @@ def Mosaic(img, bboxes, face_ids, n, isPIL = False):
                                 (bbox[3] - bbox[1])),
                                 Image.NEAREST)
                 img.paste(roi, bbox)
-    else:
+    else: # cv2, torchvision
         for bbox, face_id in zip(bboxes, face_ids):
             if face_id == 'unknown':
                 bbox = np.round(bbox).astype(int)
+
                 roi = img[bbox[1]:bbox[3], bbox[0]:bbox[2]] 
+                # print(roi.shape, bbox)
+                # print(bbox[2] - bbox[0], bbox[3] - bbox[1], (bbox[2] - bbox[0])//n, (bbox[3] - bbox[1])//n)
                 # 1/n 비율로 축소
                 roi = cv2.resize(roi, ((bbox[2] - bbox[0])//n,
                                     (bbox[3] - bbox[1])//n),
@@ -77,14 +101,14 @@ def Mosaic(img, bboxes, face_ids, n, isPIL = False):
     return img
 
 
-def DrawRectImg(img, bboxes, face_ids=[], isPIL = False):
+def DrawRectImg(img, bboxes, face_ids, input_mode):
     rect_color = (0, 0, 255) # BGR
     rect_thickness = 2 # 이미지 사이즈에 맞게 조절해야할지도
     font_scale = 1 # 위와 동일
     font_color = (0, 0, 255) # BGR
     font_thickness = 1 # 위와 동일
     
-    if isPIL:
+    if input_mode == 0: # PIL
         img_draw = img.copy()
         draw = ImageDraw.Draw(img_draw)
         i = 0
@@ -98,7 +122,7 @@ def DrawRectImg(img, bboxes, face_ids=[], isPIL = False):
             #     # draw.circle((p-10).tolist() + (p+10).tolist(), outline='white')
             #     draw.ellipse((p-10).tolist() + (p+10).tolist(), outline='white') # DOT WANT
         img_draw.save('annotated/annotated_faces.png')
-    else:
+    else: # cv2, torchvision
         for (bbox, face_id) in zip(bboxes, face_ids):
             if face_id != 'unknown':
                 # bbox: x0, y0, x1, y1
