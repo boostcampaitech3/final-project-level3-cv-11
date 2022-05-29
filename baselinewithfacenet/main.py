@@ -63,8 +63,6 @@ def ProcessImage(img, args, model_args):
     # Object Detection
     bboxes = ML.Detection(img, args, model_args)
     if bboxes is None:
-        # H W C -> C H W
-        # img = torch.permute(img, (2, 0, 1))
         img = img.numpy()
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         return img
@@ -72,11 +70,12 @@ def ProcessImage(img, args, model_args):
     # Object Recognition
     face_ids = ML.Recognition(img, bboxes, args, model_args)
 
-    if args['INPUT_MODE'] != 0: # cv2, torchvision
-        if input_mode == 2: # torchvision
+    # 모자이크 전처리
+    if input_mode != 'PIL': # cv2, torchvision
+        if input_mode == 'tv': # torchvision
             img = img.numpy()
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-
+        
     # Mosaic
     img = Mosaic(img, bboxes, face_ids, n=10, input_mode= input_mode)
 
@@ -92,7 +91,7 @@ def main(args):
 
     # =================== Image =======================
     if args['PROCESS_TARGET'] == 'Image':
-        if args['INPUT_MODE'] == 0: # PIL
+        if args['INPUT_MODE'] == 'PIL': # PIL
             img = Image.open('../data/dest_images/findobama/twopeople.jpeg')
         else: # cv2
             img = cv2.imread('../data/dest_images/findobama/twopeople.jpeg') # CV ver.
@@ -100,7 +99,7 @@ def main(args):
 
         img = ProcessImage(img, args, model_args)
 
-        if args['INPUT_MODE'] == 0: # PIL
+        if args['INPUT_MODE'] == 'PIL': # PIL
             img.save(args['SAVE_DIR']+'/output.png', 'png') 
         else: # cv2
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
@@ -110,25 +109,25 @@ def main(args):
     # =================== Video =======================
     elif args['PROCESS_TARGET'] == 'Video':
         video_path = '../data/dest_images/kakao/mudo.mp4'
+        #video_path = '../paddlevideo/mp4s/test.mp4'
 
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, 24.0, (1280,720))
 
         start = time()
-
-        if args['INPUT_MODE'] != 2: # PIL, cv2
+        if args['INPUT_MODE'] != 'tv': # PIL, cv2
             cap = cv2.VideoCapture(video_path)
             while True:
                 ret, frame = cap.read()
                 if ret:
                     img = frame
                     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    if args['INPUT_MODE'] == 0: # PIL
+                    if args['INPUT_MODE'] == 'PIL': # PIL
                         img = Image.fromarray(frame)
 
                     img = ProcessImage(img, args, model_args)
 
-                    if args['INPUT_MODE'] == 0: # PIL
+                    if args['INPUT_MODE'] == 'PIL': # PIL
                         conv_img = np.array(img)
                     img = cv2.cvtColor(conv_img, cv2.COLOR_RGB2BGR)
                     out.write(img)
@@ -137,7 +136,7 @@ def main(args):
                     break
             cap.release()
 
-        elif args['INPUT_MODE'] == 2: # torchvision
+        elif args['INPUT_MODE'] == 'tv': # torchvision
             video = torchvision.io.VideoReader(video_path, stream = 'video')
             if args['DEBUG_MODE']:
                 print(video.get_metadata())
@@ -148,6 +147,7 @@ def main(args):
                 # img.to(model_args['Device'])
                 img = torch.permute(img, (1, 2, 0))
                 img = ProcessImage(img, args, model_args)
+
                 out.write(img)
         out.release()
 

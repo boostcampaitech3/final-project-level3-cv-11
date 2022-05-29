@@ -46,11 +46,10 @@ def CropRoiImg(img, bboxes, threshold):
 def Get_normal_bbox(size, bboxes):
     new_bboxes = None
     for bbox in bboxes:
-        bbox = np.where(bbox > 0, bbox, 0)
-        if bbox[2] > size[1]:
-            bbox[2] = size[1]
-        if bbox[3] > size[0]:
-            bbox[3] = size[0]
+        if bbox[0] < 0: bbox[0] = 0
+        if bbox[1] < 0: bbox[1] = 0
+        if bbox[2] > size[1]: bbox[2] = size[1]
+        if bbox[3] > size[0]: bbox[3] = size[0]
 
         # 처리한 bbox의 상태가 이상하면 제거 처리
         if bbox[2] - bbox[0] > 0 or bbox[3] - bbox[1] > 0:
@@ -68,7 +67,7 @@ def Mosaic(img, bboxes, face_ids, n, input_mode):
     # bboxes: mosaic target positions
     # n: kernel size
 
-    if input_mode == 0: # PIL
+    if input_mode == 'PIL': # PIL
         for bbox, face_id in zip(bboxes, face_ids):
             if face_id == 'unknown':
                 bbox = np.round(bbox).astype(int)
@@ -108,7 +107,7 @@ def DrawRectImg(img, bboxes, face_ids, input_mode):
     font_color = (0, 0, 255) # BGR
     font_thickness = 1 # 위와 동일
     
-    if input_mode == 0: # PIL
+    if input_mode == 'PIL': # PIL
         img_draw = img.copy()
         draw = ImageDraw.Draw(img_draw)
         i = 0
