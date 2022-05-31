@@ -1,4 +1,6 @@
 from time import time
+
+from matplotlib.transforms import Bbox
 from util import Mosaic, DrawRectImg
 from args import Args
 from PIL import Image
@@ -16,6 +18,7 @@ import torch
 import torchvision
 from facenet_pytorch import MTCNN, InceptionResnetV1
 
+known_ids = {}
 
 def init(args):
     model_args = {}
@@ -58,6 +61,7 @@ def init(args):
 
 
 def ProcessImage(img, args, model_args):
+    global known_ids
     input_mode = args['INPUT_MODE']
 
     # Object Detection
@@ -68,7 +72,11 @@ def ProcessImage(img, args, model_args):
         return img
 
     # Object Recognition
-    face_ids = ML.Recognition(img, bboxes, args, model_args)
+    face_ids = ML.Recognition(img, bboxes, args, model_args, known_ids)
+    known_ids = {}
+    for id, bbox in zip(face_ids, bboxes):
+        if id != 'unknown':
+            known_ids[id] = bbox
 
     # 모자이크 전처리
     if input_mode != 'PIL': # cv2, torchvision
@@ -82,8 +90,7 @@ def ProcessImage(img, args, model_args):
     # 특정인에 bbox와 name을 보여주고 싶으면
     processed_img = DrawRectImg(img, bboxes, face_ids, input_mode= input_mode)
 
-    return processed_img
-    # return img
+    return (processed_img)
 
 
 def main(args):
@@ -108,7 +115,7 @@ def main(args):
 
     # =================== Video =======================
     elif args['PROCESS_TARGET'] == 'Video':
-        video_path = '../data/dest_images/kakao/mudo.mp4'
+        video_path = '../data/dest_images/kakao/song.mp4'
         #video_path = '../paddlevideo/mp4s/test.mp4'
 
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
