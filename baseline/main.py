@@ -58,7 +58,7 @@ def init(args):
 
 
 def ProcessImage(img, args, model_args):
-    process_target = args['process_target']
+    process_target = args['PROCESS_TARGET']
 
     # Object Detection
     bboxes = ML.Detection(img, args, model_args)
@@ -88,7 +88,6 @@ def ProcessImage(img, args, model_args):
 
 def main(args):
     model_args = init(args)
-
     # =================== Image =======================
     if args['PROCESS_TARGET'] == 'Image':
         img = cv2.imread('../data/dest_images/findobama/twopeople.jpeg')
@@ -96,7 +95,7 @@ def main(args):
 
         img = ProcessImage(img, args, model_args)
 
-        cv2.imwrite(args['SAVE_DIR'] + '/output1.jpg', img)
+        cv2.imwrite(args['SAVE_DIR'] + '/output.jpg', img)
     # =================== Image =======================
 
     # =================== Video =======================
@@ -124,6 +123,7 @@ def main(args):
         out.release()
         print('done.', time() - start)
     # ====================== Video ===========================
+
 
 if __name__ == "__main__":
     args = Args().params

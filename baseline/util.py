@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from math import ceil
+
 
 def GetFaceFeature(img):
     return []
@@ -22,7 +22,7 @@ def AddFaceData(_get_vector: bool, imgs: list=[]) -> list:
         return imgs
 
 
-def CropRoiImg(img, bboxes, threshold):
+def CropRoiImg(img, bboxes):
     roi_imgs = []
     for bbox in bboxes:
         # bbox: x, y, w, h
@@ -38,48 +38,63 @@ def CropRoiImg(img, bboxes, threshold):
     return roi_imgs
 
 
-def Mosaic(img, bboxes, n, mode):
+def Get_normal_bbox(size, bboxes):
+    new_bboxes = None
+    for bbox in bboxes:
+        if bbox[0] < 0: bbox[0] = 0
+        if bbox[1] < 0: bbox[1] = 0
+        if bbox[2] > size[1]: bbox[2] = size[1]
+        if bbox[3] > size[0]: bbox[3] = size[0]
+
+        # 처리한 bbox의 상태가 이상하면 제거 처리
+        if bbox[2] - bbox[0] > 0 or bbox[3] - bbox[1] > 0:
+            bbox = np.expand_dims(bbox, 0)
+            if new_bboxes is None:
+                new_bboxes = bbox
+            else:
+                new_bboxes = np.concatenate([new_bboxes, bbox])
+    return new_bboxes
+
+
+def Mosaic(img, bboxes, face_ids, n):
     # filling NxN kernel's max or average value
     # img: original image
     # bboxes: mosaic target positions
     # n: kernel size
-    # mode: max = 0, average = 1
-    # 아직 덜 짜서 커널 사이즈에 따라 bbox 영역을 벗어나기도 함
 
-    if mode == 0: # max
-        for bbox in bboxes:
-            # bbox: x, y, w, h
-            for col in range(ceil(bbox[3]/n)):
-                for row in range(ceil(bbox[2]/n)):
-                    max = np.max(img[bbox[1] + n*col:bbox[1] + n*(col+1),
-                                     bbox[0] + n*row:bbox[0] + n*(row+1)])
-                    img[bbox[1] + n*col:bbox[1] + n*(col+1),
-                        bbox[0] + n*row:bbox[0] + n*(row+1)] = max
-    elif mode == 1: # average
-        for bbox in bboxes:
-            # bbox: x, y, w, h
-            for col in range(ceil(bbox[3]/n)):
-                for row in range(ceil(bbox[2]/n)):
-                    mean = np.mean(img[bbox[1] + n*col:bbox[1] + n*(col+1),
-                                      bbox[0] + n*row:bbox[0] + n*(row+1)])
-                    img[bbox[1] + n*col:bbox[1] + n*(col+1),
-                        bbox[0] + n*row:bbox[0] + n*(row+1)] = mean
+    for bbox, face_id in zip(bboxes, face_ids):
+        if face_id == 'unknown':
+            bbox = np.round(bbox).astype(int)
+
+            roi = img[bbox[1]:bbox[3], bbox[0]:bbox[2]] 
+           # 1/n 비율로 축소
+            roi = cv2.resize(roi, ((bbox[2] - bbox[0])//n,
+                                (bbox[3] - bbox[1])//n),
+                                interpolation=cv2.INTER_AREA)
+            # 원래 크기로 확대
+            roi = cv2.resize(roi, ((bbox[2] - bbox[0]),
+                                (bbox[3] - bbox[1])),
+                                interpolation=cv2.INTER_NEAREST)
+            img[bbox[1]:bbox[3], bbox[0]:bbox[2]] = roi
+
     return img
 
 
-def DrawRectImg(img, ids: dict):
+def DrawRectImg(img, bboxes, face_ids):
     rect_color = (0, 0, 255) # BGR
     rect_thickness = 2 # 이미지 사이즈에 맞게 조절해야할지도
     font_scale = 1 # 위와 동일
     font_color = (0, 0, 255) # BGR
-    font_thickness = 2 # 위와 동일
-    # 위 값들은 나중에 config에서 조정 가능하도록 옮길 예정
+    font_thickness = 1 # 위와 동일
+    
+    for (bbox, face_id) in zip(bboxes, face_ids):
+        if face_id != 'unknown':
+            # bbox: x0, y0, x1, y1
+            bbox = np.round(bbox).astype(int)
+            cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]),
+                            rect_color, rect_thickness)
+            cv2.putText(img, face_id, (bbox[0], bbox[1]-5),
+                            1, font_scale, font_color, font_thickness)
+    img_draw = img
 
-    for id, bbox in ids.items():
-        # bbox: x, y, w, h
-        cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[0] + bbox[2], bbox[1] + bbox[3]),
-                        rect_color, rect_thickness)
-        cv2.putText(img, id, (bbox[0], bbox[1]),
-                        1, font_scale, font_color, font_thickness)
-
-    return img
+    return img_draw
