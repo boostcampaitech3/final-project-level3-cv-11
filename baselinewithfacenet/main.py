@@ -1,20 +1,18 @@
 from time import time
+import cv2
+import torch
+import torchvision
+
 from util import Mosaic, DrawRectImg
 from args import Args
-from PIL import Image
-import numpy as np
-import cv2
 
+import ml_part as ML
 from detection import load_face_db
+from facenet_pytorch import MTCNN, InceptionResnetV1
 
 from retinaface_utils.utils.model_utils import load_model
 from retinaface_utils.models.retinaface import RetinaFace
 from retinaface_utils.data.config import cfg_mnet
-import ml_part as ML
-
-import torch
-import torchvision
-from facenet_pytorch import MTCNN, InceptionResnetV1
 
 
 def init(args):
@@ -26,6 +24,7 @@ def init(args):
         print('Running on device : {}'.format(device))
 
     # Load mtcnn
+    # 이걸로 image crop하는데 이 것도 나중에 자체 기능으로 빼야함. util.py의 CropRoiImg를 좀 쓰면 될 듯.
     mtcnn = MTCNN(
         image_size=160, margin=0, min_face_size=20,
         thresholds = [0.6, 0.7, 0.7], factor=0.709, post_process=True, 
@@ -36,6 +35,7 @@ def init(args):
     # Load Detection Model
     if args['DETECTOR'] == 'mtcnn':
         # model_detection = MTCNN(keep_all=True)
+        # 나중에 image crop 자체 기능 구현되면 위 코드를 여기로
         model_detection = mtcnn
     else:
         model_path = 'retinaface_utils/weights/mobilenet0.25_Final.pth'
@@ -58,12 +58,13 @@ def init(args):
 
 
 def ProcessImage(img, args, model_args):
-    input_mode = args['INPUT_MODE']
+    process_target = args['process_target']
 
     # Object Detection
     bboxes = ML.Detection(img, args, model_args)
     if bboxes is None:
-        img = img.numpy()
+        if process_target == 'Video': # torchvision
+            img = img.numpy()
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         return img
 
@@ -71,16 +72,15 @@ def ProcessImage(img, args, model_args):
     face_ids = ML.Recognition(img, bboxes, args, model_args)
 
     # 모자이크 전처리
-    if input_mode != 'PIL': # cv2, torchvision
-        if input_mode == 'tv': # torchvision
-            img = img.numpy()
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        
+    if process_target == 'Video': # torchvision
+        img = img.numpy()
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    
     # Mosaic
-    img = Mosaic(img, bboxes, face_ids, n=10, input_mode= input_mode)
+    img = Mosaic(img, bboxes, face_ids, n=10)
 
     # 특정인에 bbox와 name을 보여주고 싶으면
-    processed_img = DrawRectImg(img, bboxes, face_ids, input_mode= input_mode)
+    processed_img = DrawRectImg(img, bboxes, face_ids)
 
     return processed_img
     # return img
@@ -91,19 +91,12 @@ def main(args):
 
     # =================== Image =======================
     if args['PROCESS_TARGET'] == 'Image':
-        if args['INPUT_MODE'] == 'PIL': # PIL
-            img = Image.open('../data/dest_images/findobama/twopeople.jpeg')
-        else: # cv2
-            img = cv2.imread('../data/dest_images/findobama/twopeople.jpeg') # CV ver.
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = cv2.imread('../data/dest_images/findobama/twopeople.jpeg')
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         img = ProcessImage(img, args, model_args)
 
-        if args['INPUT_MODE'] == 'PIL': # PIL
-            img.save(args['SAVE_DIR']+'/output.png', 'png') 
-        else: # cv2
-            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-            cv2.imwrite(args['SAVE_DIR'] + '/output1.jpg', img) # CV ver.
+        cv2.imwrite(args['SAVE_DIR'] + '/output1.jpg', img)
     # =================== Image =======================
 
     # =================== Video =======================
@@ -111,46 +104,24 @@ def main(args):
         video_path = '../data/dest_images/kakao/mudo.mp4'
         #video_path = '../paddlevideo/mp4s/test.mp4'
 
+        video = torchvision.io.VideoReader(video_path, stream = 'video')
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        # 나중에 video resolution, fps 바꾸는 옵션 넣어야 함. video.get_metadata() 이용하면 될 듯.
         out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, 24.0, (1280,720))
 
         start = time()
-        if args['INPUT_MODE'] != 'tv': # PIL, cv2
-            cap = cv2.VideoCapture(video_path)
-            while True:
-                ret, frame = cap.read()
-                if ret:
-                    img = frame
-                    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                    if args['INPUT_MODE'] == 'PIL': # PIL
-                        img = Image.fromarray(frame)
+        if args['DEBUG_MODE']:
+            print(video.get_metadata())
+        video.set_current_stream('video')
 
-                    img = ProcessImage(img, args, model_args)
+        for frame in video:
+            img = frame['data']
+            # img.to(model_args['Device'])
+            img = torch.permute(img, (1, 2, 0))
+            img = ProcessImage(img, args, model_args)
 
-                    if args['INPUT_MODE'] == 'PIL': # PIL
-                        conv_img = np.array(img)
-                    img = cv2.cvtColor(conv_img, cv2.COLOR_RGB2BGR)
-                    out.write(img)
-                    #print('done')
-                else:
-                    break
-            cap.release()
-
-        elif args['INPUT_MODE'] == 'tv': # torchvision
-            video = torchvision.io.VideoReader(video_path, stream = 'video')
-            if args['DEBUG_MODE']:
-                print(video.get_metadata())
-            video.set_current_stream('video')
-
-            for  frame in video:
-                img = frame['data']
-                # img.to(model_args['Device'])
-                img = torch.permute(img, (1, 2, 0))
-                img = ProcessImage(img, args, model_args)
-
-                out.write(img)
+            out.write(img)
         out.release()
-
         print('done.', time() - start)
     # ====================== Video ===========================
 
