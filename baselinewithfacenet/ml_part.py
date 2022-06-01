@@ -42,9 +42,9 @@ def Recognition(img, bboxes, args, model_args):
     if args['DEBUG_MODE']:
         print(faces.shape)
 
-    face_ids, result_probs = mtcnn_recognition(img, model_args['Face_db'],
+    face_ids, result_probs = mtcnn_recognition(model_args['Face_db'],
                                             unknown_embeddings,
-                                            args['RECOG_THRESHOLD'], device)
+                                            args['RECOG_THRESHOLD'])
 
     if args['DEBUG_MODE']:
         print(face_ids)
