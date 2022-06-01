@@ -1,23 +1,25 @@
-from facenet_pytorch import MTCNN, InceptionResnetV1, extract_face 
-from PIL import Image, ImageDraw
+from facenet_pytorch import MTCNN, InceptionResnetV1
 import torch 
 from torch.utils.data import DataLoader 
-from torchvision import datasets 
-import numpy as np 
-import pandas as pd 
+from torchvision import datasets
 import os
-from tqdm import tqdm
 import warnings 
 import pickle
+import cv2
+import numpy as np
+
 warnings.filterwarnings('ignore')
 workers = 0 if os.name == 'nt' else 4 
+
 
 def collate_fn(x):
     return x[0]
 
+
 def mtcnn_detection(model, img, device):
     bboxes, probs = model.detect(img, landmarks=False)
     return bboxes
+
 
 def mtcnn_get_embeddings(mtcnn, resnet, img, bboxes, device, save_path=None):
     faces = mtcnn.extract(img, bboxes, save_path)
@@ -27,9 +29,11 @@ def mtcnn_get_embeddings(mtcnn, resnet, img, bboxes, device, save_path=None):
     return faces, unknown_embeddings
 
 
-def update_face_db(known_images_path, device):
+def update_face_db(known_images_path, device, args):
     face_db = {}
     face_db_path = "./face_db"
+    if args['DETECTOR'] == 'retinaface':
+        face_db_path += "_BGR"
     assert os.path.exists(known_images_path), 'known_images_path {} not exist'.format(known_images_path)
     mtcnn = MTCNN(
         image_size=160, margin=0, min_face_size=20,
@@ -44,6 +48,9 @@ def update_face_db(known_images_path, device):
     names = []
     face_db = {}
     for x, y in loader : 
+        if args['DETECTOR'] == 'retinaface':
+            x_np = np.array(x)
+            x = cv2.cvtColor(x_np, cv2.COLOR_RGB2BGR)
         x_aligned, probs = mtcnn(x, return_prob=True)
         if x_aligned is not None: 
             print('Face detected with probability : {:8f}'.format(probs[0]))
@@ -59,15 +66,16 @@ def update_face_db(known_images_path, device):
     return face_db
 
 
-def load_face_db(known_images_path, face_db_path, device):
+def load_face_db(known_images_path, face_db_path, device, args):
     if not os.path.exists(face_db_path):
         print('face_data_path not exist!,try to get faceDatabase transform!')
-        face_db = update_face_db(known_images_path, device)
+        face_db = update_face_db(known_images_path, device, args)
         return face_db
     with open(face_db_path, "rb") as f:
         face_db = pickle.load(f)
     print('finished load face_data!')
     return face_db
+
 
 def mtcnn_recognition(img, face_db, unknown_embeddings, recog_thr, device) : 
     face_ids = []

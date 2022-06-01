@@ -51,7 +51,10 @@ def init(args):
     model_args['Recognition'] = resnet
 
     # Load Face DB
-    face_db = load_face_db("../data/test_images", "./face_db", device)
+    if args['DETECTOR'] == 'retinaface':
+        face_db = load_face_db("../data/test_images", "./face_db_BGR", device, args)
+    else:
+        face_db = load_face_db("../data/test_images", "./face_db", device, args)
     model_args['Face_db'] = face_db
     
     return model_args
@@ -63,18 +66,22 @@ def ProcessImage(img, args, model_args):
     # Object Detection
     bboxes = ML.Detection(img, args, model_args)
     if bboxes is None:
-        if process_target == 'Video': # torchvision
-            img = img.numpy()
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        if args['DETECTOR'] == 'mtcnn':
+            if process_target == 'Video': # torchvision
+                img = img.numpy()
+            # Color channel: RGB -> BGR
+            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         return img
 
     # Object Recognition
     face_ids = ML.Recognition(img, bboxes, args, model_args)
 
-    # 모자이크 전처리
-    if process_target == 'Video': # torchvision
-        img = img.numpy()
-    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    if args['DETECTOR'] == 'mtcnn':
+        # 모자이크 전처리
+        if process_target == 'Video': # torchvision
+            img = img.numpy()
+        # Color channel: RGB -> BGR
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     
     # Mosaic
     img = Mosaic(img, bboxes, face_ids, n=10)
@@ -90,8 +97,11 @@ def main(args):
     model_args = init(args)
     # =================== Image =======================
     if args['PROCESS_TARGET'] == 'Image':
+        # Color channel: BGR
         img = cv2.imread('../data/dest_images/findobama/twopeople.jpeg')
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        if args['DETECTOR'] == 'mtcnn':
+            # Color channel: BGR -> RGB
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         img = ProcessImage(img, args, model_args)
 
@@ -100,26 +110,42 @@ def main(args):
 
     # =================== Video =======================
     elif args['PROCESS_TARGET'] == 'Video':
-        video_path = '../data/dest_images/kakao/mudo.mp4'
+        video_path = '../data/dest_images/kakao/son_clip.mp4'
         #video_path = '../paddlevideo/mp4s/test.mp4'
-
-        video = torchvision.io.VideoReader(video_path, stream = 'video')
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        # 나중에 video resolution, fps 바꾸는 옵션 넣어야 함. video.get_metadata() 이용하면 될 듯.
         out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, 24.0, (1280,720))
 
         start = time()
-        if args['DEBUG_MODE']:
-            print(video.get_metadata())
-        video.set_current_stream('video')
+        if args['DETECTOR'] == 'retinaface':
+            cap = cv2.VideoCapture(video_path)
+            while True:
+                ret, img = cap.read()
+                # Color channel: BGR
+                if ret:
+                    img = ProcessImage(img, args, model_args)
 
-        for frame in video:
-            img = frame['data']
-            # img.to(model_args['Device'])
-            img = torch.permute(img, (1, 2, 0))
-            img = ProcessImage(img, args, model_args)
+                    out.write(img)
+                    #print('done')
+                else:
+                    break
+            cap.release()
 
-            out.write(img)
+        elif args['DETECTOR'] == 'mtcnn':
+            video = torchvision.io.VideoReader(video_path, stream = 'video')
+            # 나중에 video resolution, fps 바꾸는 옵션 넣어야 함. video.get_metadata() 이용하면 될 듯.
+            if args['DEBUG_MODE']:
+                print(video.get_metadata())
+            video.set_current_stream('video')
+
+            for frame in video:
+                img = frame['data']
+                # img.to(model_args['Device'])
+                # Color channel: RGB
+                img = torch.permute(img, (1, 2, 0))
+                img = ProcessImage(img, args, model_args)
+
+                out.write(img)
+
         out.release()
         print('done.', time() - start)
     # ====================== Video ===========================
