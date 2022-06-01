@@ -1,11 +1,6 @@
 import cv2
 import numpy as np
-from math import ceil
-from PIL import Image, ImageDraw
-from facenet_pytorch import extract_face
-from PIL import Image
-import torch
-import torchvision
+
 
 def GetFaceFeature(img):
     return []
@@ -27,7 +22,7 @@ def AddFaceData(_get_vector: bool, imgs: list=[]) -> list:
         return imgs
 
 
-def CropRoiImg(img, bboxes, threshold):
+def CropRoiImg(img, bboxes):
     roi_imgs = []
     for bbox in bboxes:
         # bbox: x, y, w, h
@@ -81,75 +76,47 @@ def Get_normal_bbox(size, bboxes):
     return new_bboxes
 
 
-def Mosaic(img, bboxes, face_ids, n, input_mode):
+def Mosaic(img, bboxes, face_ids, n):
     # filling NxN kernel's max or average value
     # img: original image
     # bboxes: mosaic target positions
     # n: kernel size
 
-    if input_mode == 'PIL': # PIL
-        for bbox, face_id in zip(bboxes, face_ids):
-            if face_id == 'unknown':
-                bbox = np.round(bbox).astype(int)
-                roi = img.crop(bbox)
-                roi = roi.resize(((bbox[2] - bbox[0])//n,
+    for bbox, face_id in zip(bboxes, face_ids):
+        if face_id == 'unknown':
+            bbox = np.round(bbox).astype(int)
+            # 대상이 너무 작아 모자이크가 안된다면 pass
+            if bbox[2] - bbox[0] < n or bbox[3] - bbox[1] < n:
+                continue
+            roi = img[bbox[1]:bbox[3], bbox[0]:bbox[2]] 
+           # 1/n 비율로 축소
+            roi = cv2.resize(roi, ((bbox[2] - bbox[0])//n,
                                 (bbox[3] - bbox[1])//n),
-                                Image.NEAREST)
-                roi = roi.resize(((bbox[2] - bbox[0]),
+                                interpolation=cv2.INTER_AREA)
+            # 원래 크기로 확대
+            roi = cv2.resize(roi, ((bbox[2] - bbox[0]),
                                 (bbox[3] - bbox[1])),
-                                Image.NEAREST)
-                img.paste(roi, bbox)
-    else: # cv2, torchvision
-        for bbox, face_id in zip(bboxes, face_ids):
-            if face_id == 'unknown':
-                bbox = np.round(bbox).astype(int)
-
-                roi = img[bbox[1]:bbox[3], bbox[0]:bbox[2]] 
-                # print(roi.shape, bbox)
-                # print(bbox[2] - bbox[0], bbox[3] - bbox[1], (bbox[2] - bbox[0])//n, (bbox[3] - bbox[1])//n)
-                # 1/n 비율로 축소
-                roi = cv2.resize(roi, ((bbox[2] - bbox[0])//n,
-                                    (bbox[3] - bbox[1])//n),
-                                    interpolation=cv2.INTER_AREA)
-                # 원래 크기로 확대
-                roi = cv2.resize(roi, ((bbox[2] - bbox[0]),
-                                    (bbox[3] - bbox[1])),
-                                    interpolation=cv2.INTER_NEAREST)
-                img[bbox[1]:bbox[3], bbox[0]:bbox[2]] = roi
+                                interpolation=cv2.INTER_NEAREST)
+            img[bbox[1]:bbox[3], bbox[0]:bbox[2]] = roi
 
     return img
 
 
-def DrawRectImg(img, bboxes, face_ids, input_mode):
+def DrawRectImg(img, bboxes, face_ids):
     rect_color = (0, 0, 255) # BGR
     rect_thickness = 2 # 이미지 사이즈에 맞게 조절해야할지도
     font_scale = 1 # 위와 동일
     font_color = (0, 0, 255) # BGR
     font_thickness = 1 # 위와 동일
     
-    if input_mode == 'PIL': # PIL
-        img_draw = img.copy()
-        draw = ImageDraw.Draw(img_draw)
-        i = 0
-        for (box, face_id) in zip(bboxes, face_ids):
-            extract_face(img, box, save_path='detected/detected_face_{}.png'.format(i))
-            i += 1
-            if face_id != 'unknown':
-                draw.rectangle(box.tolist(), width=rect_thickness, outline=rect_color)
-                draw.text((int(box.tolist()[0]), int(box.tolist()[1])), face_id)
-            # for p in point : 
-            #     # draw.circle((p-10).tolist() + (p+10).tolist(), outline='white')
-            #     draw.ellipse((p-10).tolist() + (p+10).tolist(), outline='white') # DOT WANT
-        img_draw.save('annotated/annotated_faces.png')
-    else: # cv2, torchvision
-        for (bbox, face_id) in zip(bboxes, face_ids):
-            if face_id != 'unknown':
-                # bbox: x0, y0, x1, y1
-                bbox = np.round(bbox).astype(int)
-                cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]),
-                                rect_color, rect_thickness)
-                cv2.putText(img, face_id, (bbox[0], bbox[1]-5),
-                                1, font_scale, font_color, font_thickness)
-        img_draw = img
+    for (bbox, face_id) in zip(bboxes, face_ids):
+        if face_id != 'unknown':
+            # bbox: x0, y0, x1, y1
+            bbox = np.round(bbox).astype(int)
+            cv2.rectangle(img, (bbox[0], bbox[1]), (bbox[2], bbox[3]),
+                            rect_color, rect_thickness)
+            cv2.putText(img, face_id, (bbox[0], bbox[1]-5),
+                            1, font_scale, font_color, font_thickness)
+    img_draw = img
 
     return img_draw
