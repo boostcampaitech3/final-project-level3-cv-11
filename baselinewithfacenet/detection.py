@@ -76,18 +76,22 @@ def load_face_db(known_images_path, face_db_path, device, args):
     print('finished load face_data!')
     return face_db
 
-def mtcnn_recognition(img, face_db, unknown_embeddings, recog_thr, iou_weights) : 
+def mtcnn_recognition(img, face_db, unknown_embeddings, recog_thr, known_ids) : 
     face_ids = []
     probs = []
+    if known_ids is not None:
+        iou_weights = known_ids.weights_list()
     for i in range(len(unknown_embeddings)):
         result_dict = {}
         eb = unknown_embeddings[i]
-        prev_name = iou_weights[i]
+        if known_ids is not None:
+            prev_name = iou_weights[i]
         for (name) in face_db.keys():
             knownfeature = face_db[name]
             prob = (eb - knownfeature).norm().item()
-            if prev_name == name:
-                prob -= 0.4 # 가중치 값
+            if known_ids is not None:
+                if prev_name == name:
+                    prob -= known_ids.weight() # 가중치 값
             result_dict[name] = (prob)
         results = sorted(result_dict.items(), key=lambda d:d[1])
         result_name, result_probs = results[0][0], results[0][1]

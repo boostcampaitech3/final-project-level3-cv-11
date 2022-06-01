@@ -3,7 +3,7 @@ import cv2
 import torch
 import torchvision
 
-from util import Mosaic, DrawRectImg
+from util import Mosaic, DrawRectImg, TrackingID
 from args import Args
 
 import ml_part as ML
@@ -14,7 +14,6 @@ from retinaface_utils.utils.model_utils import load_model
 from retinaface_utils.models.retinaface import RetinaFace
 from retinaface_utils.data.config import cfg_mnet
 
-known_ids = {}
 
 def init(args):
     model_args = {}
@@ -61,8 +60,7 @@ def init(args):
     return model_args
 
 
-def ProcessImage(img, args, model_args):
-    global known_ids
+def ProcessImage(img, args, model_args, known_ids = None):
     process_target = args['PROCESS_TARGET']
 
     # Object Detection
@@ -77,10 +75,9 @@ def ProcessImage(img, args, model_args):
 
     # Object Recognition
     face_ids = ML.Recognition(img, bboxes, args, model_args, known_ids)
-    known_ids = {}
-    for id, bbox in zip(face_ids, bboxes):
-        if id != 'unknown':
-            known_ids[id] = bbox
+    # 이번 프레임의 ids 수집
+    if known_ids is not None:
+        known_ids.get_ids(face_ids, bboxes)
 
     if args['DETECTOR'] == 'mtcnn':
         # 모자이크 전처리
@@ -115,10 +112,11 @@ def main(args):
 
     # =================== Video =======================
     elif args['PROCESS_TARGET'] == 'Video':
-        video_path = '../data/dest_images/kakao/son_clip.mp4'
+        video_path = '../data/dest_images/kakao/song.mp4'
         #video_path = '../paddlevideo/mp4s/test.mp4'
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, 24.0, (1280,720))
+        known_ids = TrackingID(IoU_thr=.8, IoU_weight=.4)
 
         start = time()
         if args['DETECTOR'] == 'retinaface':
@@ -127,7 +125,7 @@ def main(args):
                 ret, img = cap.read()
                 # Color channel: BGR
                 if ret:
-                    img = ProcessImage(img, args, model_args)
+                    img = ProcessImage(img, args, model_args, known_ids)
 
                     out.write(img)
                     #print('done')
@@ -147,7 +145,7 @@ def main(args):
                 # img.to(model_args['Device'])
                 # Color channel: RGB
                 img = torch.permute(img, (1, 2, 0))
-                img = ProcessImage(img, args, model_args)
+                img = ProcessImage(img, args, model_args, known_ids)
 
                 out.write(img)
 

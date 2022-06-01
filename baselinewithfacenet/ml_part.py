@@ -1,7 +1,7 @@
 # from util import CropRoiImg
-from util import Get_normal_bbox, CheckIoU
+from util import Get_normal_bbox
 
-from detection import mtcnn_detection, mtcnn_get_embeddings, mtcnn_recognition, load_face_db
+from detection import mtcnn_detection, mtcnn_get_embeddings, mtcnn_recognition
 from retinaface_utils.util import retinaface_detection
 
 def Detection(img, args, model_args):
@@ -45,16 +45,14 @@ def Recognition(img, bboxes, args, model_args, known_ids):
 
     IoU_treshhold = 0.8
     iou_weights = ['unknown' for _ in bboxes]
-    if known_ids:
-        for i, (name, known_bbox) in enumerate(known_ids.items()):
-            for bbox in bboxes:
-                iou = CheckIoU(bbox, known_bbox)
-                if iou > IoU_treshhold:
-                    iou_weights[i] = name
+    if known_ids is not None:
+        if known_ids:
+            # IoU 비교로 겹치는 대상을 known_ids.iou_weights에 저장
+            known_ids.check_iou(bboxes)
 
     face_ids, result_probs = mtcnn_recognition(img, model_args['Face_db'],
                                             unknown_embeddings,
-                                            args['RECOG_THRESHOLD'], iou_weights)
+                                            args['RECOG_THRESHOLD'], known_ids)
 
     if args['DEBUG_MODE']:
         print(face_ids)

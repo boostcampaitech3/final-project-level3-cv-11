@@ -38,26 +38,6 @@ def CropRoiImg(img, bboxes):
     return roi_imgs
 
 
-def CheckIoU(box1, box2):
-    # box = (x1, y1, x2, y2)
-    box1_area = (box1[2] - box1[0] + 1) * (box1[3] - box1[1] + 1)
-    box2_area = (box2[2] - box2[0] + 1) * (box2[3] - box2[1] + 1)
-
-    # obtain x1, y1, x2, y2 of the intersection
-    x1 = max(box1[0], box2[0])
-    y1 = max(box1[1], box2[1])
-    x2 = min(box1[2], box2[2])
-    y2 = min(box1[3], box2[3])
-
-    # compute the width and height of the intersection
-    w = max(0, x2 - x1 + 1)
-    h = max(0, y2 - y1 + 1)
-
-    inter = w * h
-    iou = inter / (box1_area + box2_area - inter)
-    return iou
-
-
 def Get_normal_bbox(size, bboxes):
     new_bboxes = None
     for bbox in bboxes:
@@ -120,3 +100,61 @@ def DrawRectImg(img, bboxes, face_ids):
     img_draw = img
 
     return img_draw
+
+
+def CheckIoU(box1, box2):
+
+    # obtain x1, y1, x2, y2 of the intersection
+    x1 = max(box1[0], box2[0]) # 좌
+    y1 = max(box1[1], box2[1]) # 상
+    x2 = min(box1[2], box2[2]) # 우
+    y2 = min(box1[3], box2[3]) # 하
+
+    # compute the width and height of the intersection
+    w = max(0, x2 - x1 + 1)
+    h = max(0, y2 - y1 + 1)
+    if w * h == 0:
+        return 0.0
+    
+    # box = (x1, y1, x2, y2)
+    box1_area = (box1[2] - box1[0] + 1) * (box1[3] - box1[1] + 1)
+    box2_area = (box2[2] - box2[0] + 1) * (box2[3] - box2[1] + 1)
+
+    inter = w * h
+    iou = inter / (box1_area + box2_area - inter)
+    return iou
+
+
+class TrackingID():
+    def __init__(self, IoU_thr, IoU_weight):
+        self.known_ids = {}
+        self.iou_weights = []
+        self.iou_threshold = IoU_thr
+        self.recog_weight = IoU_weight
+
+    def get_ids(self, face_ids, bboxes):
+        self.known_ids = {} # initialize
+        for id, bbox in zip(face_ids, bboxes):
+            if id != 'unknown':
+                self.known_ids[id] = bbox
+
+    def check_iou(self, bboxes):
+        self.iou_weights = ['unknown' for _ in bboxes]
+        print(self.known_ids.keys())
+        for i, (name, known_bbox) in enumerate(self.known_ids.items()):
+            for bbox in bboxes:
+                iou = CheckIoU(bbox, known_bbox)
+                if iou > self.iou_threshold:
+                    self.iou_weights[i] = name
+    
+    def __call__(self) -> dict:
+        return self.known_ids
+
+    def weights_list(self) -> list:
+        return self.iou_weights
+
+    def threshold(self) -> float:
+        return self.iou_threshold
+    
+    def weight(self) -> float:
+        return self.recog_weight
