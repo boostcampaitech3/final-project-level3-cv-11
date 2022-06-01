@@ -82,13 +82,14 @@ def Mosaic(img, bboxes, face_ids, n):
     return img
 
 
-def DrawRectImg(img, bboxes, face_ids):
+def DrawRectImg(img, bboxes, face_ids, known_ids):
     rect_color = (0, 0, 255) # BGR
     rect_thickness = 2 # 이미지 사이즈에 맞게 조절해야할지도
     font_scale = 1 # 위와 동일
     font_color = (0, 0, 255) # BGR
     font_thickness = 1 # 위와 동일
     
+    cv2.putText(img, str(known_ids.cnt()), (10, 50), 1, 3, font_color, 3)
     for (bbox, face_id) in zip(bboxes, face_ids):
         if face_id != 'unknown':
             # bbox: x0, y0, x1, y1
@@ -122,6 +123,7 @@ def CheckIoU(box1, box2):
 
     inter = w * h
     iou = inter / (box1_area + box2_area - inter)
+
     return iou
 
 
@@ -131,6 +133,7 @@ class TrackingID():
         self.iou_weights = []
         self.iou_threshold = IoU_thr
         self.recog_weight = IoU_weight
+        self.count = 0
 
     def get_ids(self, face_ids, bboxes):
         self.known_ids = {} # initialize
@@ -140,9 +143,8 @@ class TrackingID():
 
     def check_iou(self, bboxes):
         self.iou_weights = ['unknown' for _ in bboxes]
-        print(self.known_ids.keys())
-        for i, (name, known_bbox) in enumerate(self.known_ids.items()):
-            for bbox in bboxes:
+        for i, bbox in enumerate(bboxes):
+            for name, known_bbox in self.known_ids.items():
                 iou = CheckIoU(bbox, known_bbox)
                 if iou > self.iou_threshold:
                     self.iou_weights[i] = name
@@ -158,3 +160,7 @@ class TrackingID():
     
     def weight(self) -> float:
         return self.recog_weight
+
+    def cnt(self):
+        self.count += 1
+        return self.count

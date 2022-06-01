@@ -95,9 +95,9 @@ def mtcnn_recognition(img, face_db, unknown_embeddings, recog_thr, known_ids) :
             result_dict[name] = (prob)
         results = sorted(result_dict.items(), key=lambda d:d[1])
         result_name, result_probs = results[0][0], results[0][1]
-        if result_probs < recog_thr: 
+        if result_probs < recog_thr:
             face_ids.append(result_name)
-        else : 
+        else: 
             face_ids.append('unknown')
         probs.append(result_probs)
     return face_ids, result_probs

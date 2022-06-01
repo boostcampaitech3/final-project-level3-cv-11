@@ -73,24 +73,26 @@ def ProcessImage(img, args, model_args, known_ids = None):
             img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         return img
 
-    # Object Recognition
-    face_ids = ML.Recognition(img, bboxes, args, model_args, known_ids)
-    # 이번 프레임의 ids 수집
-    if known_ids is not None:
-        known_ids.get_ids(face_ids, bboxes)
-
     if args['DETECTOR'] == 'mtcnn':
         # 모자이크 전처리
         if process_target == 'Video': # torchvision
             img = img.numpy()
         # Color channel: RGB -> BGR
         img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+
+    # Object Recognition
+    face_ids = ML.Recognition(img, bboxes, args, model_args, known_ids)
+    # 이번 프레임의 ids 수집
+    if known_ids is not None:
+        known_ids.get_ids(face_ids, bboxes)
+
     
     # Mosaic
     img = Mosaic(img, bboxes, face_ids, n=10)
 
     # 특정인에 bbox와 name을 보여주고 싶으면
-    processed_img = DrawRectImg(img, bboxes, face_ids)
+    # 임시 카운트
+    processed_img = DrawRectImg(img, bboxes, face_ids, known_ids)
 
     return (processed_img)
 
@@ -100,7 +102,7 @@ def main(args):
     # =================== Image =======================
     if args['PROCESS_TARGET'] == 'Image':
         # Color channel: BGR
-        img = cv2.imread('../data/dest_images/findobama/twopeople.jpeg')
+        img = cv2.imread(args['IMAGE_DIR'])
         if args['DETECTOR'] == 'mtcnn':
             # Color channel: BGR -> RGB
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
