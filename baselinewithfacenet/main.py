@@ -1,13 +1,8 @@
 from time import time
-<<<<<<< HEAD
-
-from matplotlib.transforms import Bbox
-=======
 import cv2
 import torch
 import torchvision
 
->>>>>>> 59c69ac6dd276dacd2fb01a4927f4e1d4624cd47
 from util import Mosaic, DrawRectImg
 from args import Args
 
@@ -67,12 +62,8 @@ def init(args):
 
 
 def ProcessImage(img, args, model_args):
-<<<<<<< HEAD
     global known_ids
-    input_mode = args['INPUT_MODE']
-=======
     process_target = args['PROCESS_TARGET']
->>>>>>> 59c69ac6dd276dacd2fb01a4927f4e1d4624cd47
 
     # Object Detection
     bboxes = ML.Detection(img, args, model_args)
@@ -124,11 +115,7 @@ def main(args):
 
     # =================== Video =======================
     elif args['PROCESS_TARGET'] == 'Video':
-<<<<<<< HEAD
-        video_path = '../data/dest_images/kakao/song.mp4'
-=======
         video_path = '../data/dest_images/kakao/son_clip.mp4'
->>>>>>> 59c69ac6dd276dacd2fb01a4927f4e1d4624cd47
         #video_path = '../paddlevideo/mp4s/test.mp4'
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, 24.0, (1280,720))

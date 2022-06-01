@@ -76,12 +76,7 @@ def load_face_db(known_images_path, face_db_path, device, args):
     print('finished load face_data!')
     return face_db
 
-<<<<<<< HEAD
 def mtcnn_recognition(img, face_db, unknown_embeddings, recog_thr, iou_weights) : 
-=======
-
-def mtcnn_recognition(img, face_db, unknown_embeddings, recog_thr, device) : 
->>>>>>> 59c69ac6dd276dacd2fb01a4927f4e1d4624cd47
     face_ids = []
     probs = []
     for i in range(len(unknown_embeddings)):
