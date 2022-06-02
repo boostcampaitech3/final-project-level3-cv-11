@@ -1,5 +1,6 @@
 from time import time
 import cv2
+from PIL import Image
 import torch
 import torchvision
 
@@ -51,12 +52,17 @@ def init(args):
     model_args['Recognition'] = resnet
 
     # Load Face DB
+    face_db_path = "./database/face_db"
     if args['DETECTOR'] == 'retinaface':
-        face_db = load_face_db("../data/test_images", "./face_db_BGR", device, args)
-    else:
-        face_db = load_face_db("../data/test_images", "./face_db", device, args)
+        face_db_path += "_BGR"
+
+    face_db = load_face_db("../data/test_images",
+                            face_db_path,
+                            "./database/img_db",
+                            device, args, model_args)
+
     model_args['Face_db'] = face_db
-    
+
     return model_args
 
 
@@ -96,12 +102,17 @@ def ProcessImage(img, args, model_args):
 def main(args):
     model_args = init(args)
     # =================== Image =======================
+    image_dir = args['IMAGE_DIR']
     if args['PROCESS_TARGET'] == 'Image':
-        # Color channel: BGR
-        img = cv2.imread('../data/dest_images/findobama/twopeople.jpeg')
         if args['DETECTOR'] == 'mtcnn':
-            # Color channel: BGR -> RGB
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            # Color channel: RGB
+            if image_dir[-3:].upper() == 'PNG':
+                img = Image.open(image_dir).convert('RGB')
+            else:
+                img = Image.open(image_dir)
+        elif args['DETECTOR'] == 'retinaface':
+            # Color channel: BGR
+            img = cv2.imread(image_dir)
 
         img = ProcessImage(img, args, model_args)
 
@@ -110,7 +121,7 @@ def main(args):
 
     # =================== Video =======================
     elif args['PROCESS_TARGET'] == 'Video':
-        video_path = '../data/dest_images/kakao/son_clip.mp4'
+        video_path = '../data/dest_images/kakao/song.mp4'
         #video_path = '../paddlevideo/mp4s/test.mp4'
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
         out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, 24.0, (1280,720))
