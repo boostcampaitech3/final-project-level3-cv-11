@@ -1,7 +1,8 @@
 # from util import CropRoiImg
+import numpy as np
 from util import Get_normal_bbox
 
-from detection import mtcnn_detection, mtcnn_get_embeddings, mtcnn_recognition, load_face_db
+from detection import mtcnn_detection, mtcnn_get_embeddings, recognizer
 from retinaface_utils.util import retinaface_detection
 
 def Detection(img, args, model_args):
@@ -12,15 +13,17 @@ def Detection(img, args, model_args):
 
     if args['DETECTOR'] == 'mtcnn':
         bboxes = mtcnn_detection(model_args['Detection'], img, device)
+        img = np.array(img)
     else:
         bboxes = retinaface_detection(model_args['Detection'], img, device)
 
-    if args['DEBUG_MODE']:
-        print(bboxes)
     # 이미지 범위 외로 나간 bbox값 범위 처리
     if bboxes is not None:
         bboxes = Get_normal_bbox(img.shape, bboxes)
     # =============================
+
+    if args['DEBUG_MODE']:
+        print(bboxes)
 
     return bboxes
 
@@ -41,13 +44,15 @@ def Recognition(img, bboxes, args, model_args):
                                                      img, bboxes, device)
     if args['DEBUG_MODE']:
         print(faces.shape)
+        print(unknown_embeddings.shape)
 
-    face_ids, result_probs = mtcnn_recognition(model_args['Face_db'],
-                                            unknown_embeddings,
-                                            args['RECOG_THRESHOLD'])
+    face_ids, result_probs = recognizer(model_args['Face_db'],
+                                        unknown_embeddings,
+                                        args['RECOG_THRESHOLD'])
 
     if args['DEBUG_MODE']:
         print(face_ids)
+        print(result_probs)
     # =============================
 
     return face_ids

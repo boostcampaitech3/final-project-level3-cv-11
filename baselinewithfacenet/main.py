@@ -8,13 +8,12 @@ from util import Mosaic, DrawRectImg
 from args import Args
 
 import ml_part as ML
-from detection import load_face_db
+from database import load_face_db
 from facenet_pytorch import MTCNN, InceptionResnetV1
 
 from retinaface_utils.utils.model_utils import load_model
 from retinaface_utils.models.retinaface import RetinaFace
 from retinaface_utils.data.config import cfg_mnet
-
 
 def init(args):
     model_args = {}
@@ -45,20 +44,21 @@ def init(args):
         model_detection = load_model(model_detection, model_path, device)
         model_detection.to(device)
         model_detection.eval()
+
     model_args['Detection'] = model_detection
 
     # Load Recognition Models
     resnet = InceptionResnetV1(pretrained='vggface2').eval().to(device)
+
     model_args['Recognition'] = resnet
 
     # Load Face DB
-    face_db_path = "./database/face_db"
-    if args['DETECTOR'] == 'retinaface':
-        face_db_path += "_BGR"
+    db_path = "./database"
+    # if args['DETECTOR'] == 'retinaface':
+    #     face_db_path += "_BGR"
 
     face_db = load_face_db("../data/test_images",
-                            face_db_path,
-                            "./database/img_db",
+                            db_path,
                             device, args, model_args)
 
     model_args['Face_db'] = face_db
@@ -81,7 +81,7 @@ def ProcessImage(img, args, model_args):
 
     # Object Recognition
     face_ids = ML.Recognition(img, bboxes, args, model_args)
-
+    
     if args['DETECTOR'] == 'mtcnn':
         # 모자이크 전처리
         if process_target == 'Video': # torchvision
@@ -101,6 +101,7 @@ def ProcessImage(img, args, model_args):
 
 def main(args):
     model_args = init(args)
+
     # =================== Image =======================
     image_dir = args['IMAGE_DIR']
     if args['PROCESS_TARGET'] == 'Image':
@@ -113,10 +114,10 @@ def main(args):
         elif args['DETECTOR'] == 'retinaface':
             # Color channel: BGR
             img = cv2.imread(image_dir)
-
         img = ProcessImage(img, args, model_args)
 
         cv2.imwrite(args['SAVE_DIR'] + '/output.jpg', img)
+        print('image process complete!')
     # =================== Image =======================
 
     # =================== Video =======================
@@ -124,7 +125,11 @@ def main(args):
         video_path = '../data/dest_images/kakao/song.mp4'
         #video_path = '../paddlevideo/mp4s/test.mp4'
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, 24.0, (1280,720))
+        width = int(cap.get(3))
+        height = int(cap.get(4))
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, 24.0, (width, height))
 
         start = time()
         if args['DETECTOR'] == 'retinaface':
