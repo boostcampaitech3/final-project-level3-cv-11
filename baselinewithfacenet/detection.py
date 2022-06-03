@@ -1,9 +1,3 @@
-import numpy as np
-
-
-def cosine_metric(x1, x2):
-    return np.dot(x1, x2) / (np.linalg.norm(x1) * np.linalg.norm(x2))
-
 def mtcnn_detection(model, img, device):
     bboxes, probs = model.detect(img, landmarks=False)
     return bboxes
