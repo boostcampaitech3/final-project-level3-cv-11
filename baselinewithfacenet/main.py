@@ -59,7 +59,7 @@ def ProcessImage(img, args, model_args, known_ids = None):
         return img
 
     # Object Recognition
-    face_ids = ML.Recognition(img, bboxes, args, model_args)
+    face_ids = ML.Recognition(img, bboxes, args, model_args, known_ids)
     # 이번 프레임의 ids 수집
     if known_ids is not None:
         known_ids.get_ids(face_ids, bboxes)

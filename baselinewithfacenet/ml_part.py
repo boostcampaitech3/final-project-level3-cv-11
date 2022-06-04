@@ -55,7 +55,8 @@ def Recognition(img, bboxes, args, model_args, known_ids):
                                 (255, 0, 0), 2)
 
     face_ids, result_probs = recognizer(model_args['Face_db'],
-                                        args['RECOG_THRESHOLD'])
+                                        unknown_embeddings,
+                                        args['RECOG_THRESHOLD'], known_ids)
 
     if args['DEBUG_MODE']:
         print(result_probs)
