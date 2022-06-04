@@ -4,6 +4,7 @@
 */*.pyc
 */video.mp4
 data/*
+data_/*
 */.ipynb_checkpoints/*
 __pycache__/
 baselinewithfacenet/saved/*
