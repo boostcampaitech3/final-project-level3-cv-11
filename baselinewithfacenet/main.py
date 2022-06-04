@@ -22,28 +22,14 @@ def init(args):
     model_args['Device'] = device
     if args['DEBUG_MODE']:
         print('Running on device : {}'.format(device))
-
-    # Load mtcnn
-    # 이걸로 image crop하는데 이 것도 나중에 자체 기능으로 빼야함. util.py의 CropRoiImg를 좀 쓰면 될 듯.
-    mtcnn = MTCNN(
-        image_size=160, margin=0, min_face_size=20,
-        thresholds = [0.6, 0.7, 0.7], factor=0.709, post_process=True, 
-        device=device, keep_all=True
-    )
-    model_args['Mtcnn'] = mtcnn
     
     # Load Detection Model
-    if args['DETECTOR'] == 'mtcnn':
-        # model_detection = MTCNN(keep_all=True)
-        # 나중에 image crop 자체 기능 구현되면 위 코드를 여기로
-        model_detection = mtcnn
-    else:
-        model_path = 'retinaface_utils/weights/mobilenet0.25_Final.pth'
-        backbone_path = './retinaface_utils/weights/mobilenetV1X0.25_pretrain.tar'
-        model_detection = RetinaFace(cfg=cfg_mnet, backbone_path=backbone_path, phase = 'test')
-        model_detection = load_model(model_detection, model_path, device)
-        model_detection.to(device)
-        model_detection.eval()
+    model_path = 'retinaface_utils/weights/mobilenet0.25_Final.pth'
+    backbone_path = './retinaface_utils/weights/mobilenetV1X0.25_pretrain.tar'
+    model_detection = RetinaFace(cfg=cfg_mnet, backbone_path=backbone_path, phase = 'test')
+    model_detection = load_model(model_detection, model_path, device)
+    model_detection.to(device)
+    model_detection.eval()
 
     model_args['Detection'] = model_detection
 
@@ -54,8 +40,6 @@ def init(args):
 
     # Load Face DB
     db_path = "./database"
-    # if args['DETECTOR'] == 'retinaface':
-    #     face_db_path += "_BGR"
 
     face_db = load_face_db("../data/test_images",
                             db_path,
@@ -72,22 +56,10 @@ def ProcessImage(img, args, model_args):
     # Object Detection
     bboxes = ML.Detection(img, args, model_args)
     if bboxes is None:
-        if args['DETECTOR'] == 'mtcnn':
-            if process_target == 'Video': # torchvision
-                img = img.numpy()
-            # Color channel: RGB -> BGR
-            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         return img
 
     # Object Recognition
     face_ids = ML.Recognition(img, bboxes, args, model_args)
-    
-    if args['DETECTOR'] == 'mtcnn':
-        # 모자이크 전처리
-        if process_target == 'Video': # torchvision
-            img = img.numpy()
-        # Color channel: RGB -> BGR
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     
     # Mosaic
     img = Mosaic(img, bboxes, face_ids, n=10)
@@ -105,17 +77,9 @@ def main(args):
     # =================== Image =======================
     image_dir = args['IMAGE_DIR']
     if args['PROCESS_TARGET'] == 'Image':
-        if args['DETECTOR'] == 'mtcnn':
-            # Color channel: RGB
-            if image_dir[-3:].upper() == 'PNG':
-                img = Image.open(image_dir).convert('RGB')
-            else:
-                img = Image.open(image_dir)
-        elif args['DETECTOR'] == 'retinaface':
-            # Color channel: BGR
-            img = cv2.imread(image_dir)
+        # Color channel: BGR
+        img = cv2.imread(image_dir)
         img = ProcessImage(img, args, model_args)
-
         cv2.imwrite(args['SAVE_DIR'] + '/output.jpg', img)
         print('image process complete!')
     # =================== Image =======================
@@ -124,44 +88,24 @@ def main(args):
     elif args['PROCESS_TARGET'] == 'Video':
         video_path = '../data/dest_images/kakao/song.mp4'
         #video_path = '../paddlevideo/mp4s/test.mp4'
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        width = int(cap.get(3))
-        height = int(cap.get(4))
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-        out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, 24.0, (width, height))
 
         start = time()
-        if args['DETECTOR'] == 'retinaface':
-            cap = cv2.VideoCapture(video_path)
-            while True:
-                ret, img = cap.read()
-                # Color channel: BGR
-                if ret:
-                    img = ProcessImage(img, args, model_args)
-
-                    out.write(img)
-                    #print('done')
-                else:
-                    break
-            cap.release()
-
-        elif args['DETECTOR'] == 'mtcnn':
-            video = torchvision.io.VideoReader(video_path, stream = 'video')
-            # 나중에 video resolution, fps 바꾸는 옵션 넣어야 함. video.get_metadata() 이용하면 될 듯.
-            if args['DEBUG_MODE']:
-                print(video.get_metadata())
-            video.set_current_stream('video')
-
-            for frame in video:
-                img = frame['data']
-                # img.to(model_args['Device'])
-                # Color channel: RGB
-                img = torch.permute(img, (1, 2, 0))
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        cap = cv2.VideoCapture(video_path)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        fps = round(cap.get(cv2.CAP_PROP_FPS))
+        out = cv2.VideoWriter(args['SAVE_DIR'] + '/output.mp4', fourcc, fps, (width, height))
+        while True:
+            ret, img = cap.read()
+            # Color channel: BGR
+            if ret:
                 img = ProcessImage(img, args, model_args)
-
                 out.write(img)
+            else:
+                break
 
+        cap.release()
         out.release()
         print('done.', time() - start)
     # ====================== Video ===========================

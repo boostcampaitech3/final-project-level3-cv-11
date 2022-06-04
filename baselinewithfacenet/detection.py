@@ -1,13 +1,13 @@
-def mtcnn_detection(model, img, device):
-    bboxes, probs = model.detect(img, landmarks=False)
-    return bboxes
+from util import CropRoiImg
 
-def mtcnn_get_embeddings(mtcnn, resnet, img, bboxes, device, save_path=None):
-    faces = mtcnn.extract(img, bboxes, save_path)
+
+def get_embeddings(resnet, img, bboxes, device, size = 160, save_path=None):
+    faces = CropRoiImg(img, bboxes, size, save_path)
     # print(faces.shape)
     faces = faces.to(device)
     unknown_embeddings = resnet(faces).detach().cpu()
     return faces, unknown_embeddings
+
 
 def recognizer(face_db, unknown_embeddings, recog_thr) : 
     face_ids = []

@@ -9,7 +9,7 @@ from PIL import Image
 from torch.utils.data import DataLoader 
 from torchvision import datasets
 from facenet_pytorch import MTCNN, InceptionResnetV1
-from detection import mtcnn_detection, mtcnn_get_embeddings, recognizer
+from detection import get_embeddings, recognizer
 from retinaface_utils.util import retinaface_detection
 
 warnings.filterwarnings('ignore')
@@ -100,14 +100,12 @@ def build_db(known_images_path, face_db_path, img_db_path, device, args, model_a
     for x, y in loader : 
         name = dataset.idx_to_class[y]
         
-        if args['DETECTOR'] == 'retinaface':
-            x_np = np.array(x)
-            x = cv2.cvtColor(x_np, cv2.COLOR_RGB2BGR)
-            bboxes = retinaface_detection(detector, x, device)
-        else: # mtcnn
-            bboxes = mtcnn_detection(detector, x, device)
+        x_np = np.array(x)
+        x = cv2.cvtColor(x_np, cv2.COLOR_RGB2BGR)
+        bboxes = retinaface_detection(detector, x, device)
+        
         assert bboxes is not None, f'no detection in {name}'
-        faces, embedding = mtcnn_get_embeddings(model_args['Mtcnn'], recognizer, x, bboxes, device)
+        faces, embedding = get_embeddings(model_args['Mtcnn'], recognizer, x, bboxes, device)
         embedding = embedding.numpy()
         if name in face_db:
             face_db[name].append(embedding)

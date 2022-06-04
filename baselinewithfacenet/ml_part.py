@@ -2,7 +2,7 @@
 import numpy as np
 from util import Get_normal_bbox
 
-from detection import mtcnn_detection, mtcnn_get_embeddings, recognizer
+from detection import get_embeddings, recognizer
 from retinaface_utils.util import retinaface_detection
 
 def Detection(img, args, model_args):
@@ -11,11 +11,7 @@ def Detection(img, args, model_args):
     # ======== ML Part ============
     device = model_args['Device']
 
-    if args['DETECTOR'] == 'mtcnn':
-        bboxes = mtcnn_detection(model_args['Detection'], img, device)
-        img = np.array(img)
-    else:
-        bboxes = retinaface_detection(model_args['Detection'], img, device)
+    bboxes = retinaface_detection(model_args['Detection'], img, device)
 
     # 이미지 범위 외로 나간 bbox값 범위 처리
     if bboxes is not None:
@@ -39,9 +35,9 @@ def Recognition(img, bboxes, args, model_args):
     # ======== ML Part ============
     device = model_args['Device']
 
-    faces, unknown_embeddings = mtcnn_get_embeddings(model_args['Mtcnn'],
-                                                     model_args['Recognition'],
-                                                     img, bboxes, device)
+    faces, unknown_embeddings = get_embeddings(model_args['Recognition'],
+                                            img, bboxes, device)
+                                            
     if args['DEBUG_MODE']:
         print(faces.shape)
         print(unknown_embeddings.shape)
