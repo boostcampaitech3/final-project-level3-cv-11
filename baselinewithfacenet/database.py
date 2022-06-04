@@ -105,7 +105,7 @@ def build_db(known_images_path, face_db_path, img_db_path, device, args, model_a
         bboxes = retinaface_detection(detector, x, device)
         
         assert bboxes is not None, f'no detection in {name}'
-        faces, embedding = get_embeddings(model_args['Mtcnn'], recognizer, x, bboxes, device)
+        faces, embedding = get_embeddings(recognizer, x, bboxes, device)
         embedding = embedding.numpy()
         if name in face_db:
             face_db[name].append(embedding)
