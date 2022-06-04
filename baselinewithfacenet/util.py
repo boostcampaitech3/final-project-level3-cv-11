@@ -1,9 +1,9 @@
 import cv2
 import numpy as np
-
-
-def GetFaceFeature(img):
-    return []
+from torch.nn.functional import interpolate
+from torchvision.transforms import functional as F
+from PIL import Image
+import torch
 
 
 def AddFaceData(_get_vector: bool, imgs: list=[]) -> list:
@@ -22,19 +22,55 @@ def AddFaceData(_get_vector: bool, imgs: list=[]) -> list:
         return imgs
 
 
-def CropRoiImg(img, bboxes):
+def fixed_image_standardization(image_tensor):
+    processed_tensor = (image_tensor - 127.5) / 128.0
+    return processed_tensor
+
+
+def imresample(img, sz):
+    im_data = interpolate(img, size=sz, mode="area")
+    return im_data
+
+
+def crop_resize(img, box, image_size):
+    if isinstance(img, np.ndarray):
+        img = img[box[1]:box[3], box[0]:box[2]]
+        out = cv2.resize(
+            img,
+            (image_size, image_size),
+            interpolation=cv2.INTER_AREA
+        ).copy()
+    elif isinstance(img, torch.Tensor):
+        img = img[box[1]:box[3], box[0]:box[2]]
+        out = imresample(
+            img.permute(2, 0, 1).unsqueeze(0).float(),
+            (image_size, image_size)
+        ).byte().squeeze(0).permute(1, 2, 0)
+    else:
+        out = img.crop(box).copy().resize((image_size, image_size), Image.BILINEAR)
+    return out
+
+
+def CropRoiImg(img, bboxes, image_size, save_path):
+    # Crop image 저장 옵션 -> 중간에 unknown face의 데이터를 뽑아야할 때 씀
+    # bbox에 맞춰 crop, output size 조절 옵션
+    # batch mode 고려
     roi_imgs = []
     for bbox in bboxes:
         # bbox: x, y, w, h
-        y0 = bbox[1]
-        y1 = bbox[1] + bbox[3]
-        x0 = bbox[0]
-        x1 = bbox[0] + bbox[2]
+        bbox = np.round(bbox).astype(int)
+        face = crop_resize(img, bbox, image_size)
+        face = F.to_tensor(np.float32(face))
+        face = fixed_image_standardization(face)
+        roi_imgs.append(face)
 
-        roi_img = img[y0: y1, x0:x1]
-        # 추가적으로 roi_img feature를 뽑아야 할지
-        # GetFaceFeature(img)
-        roi_imgs.append(roi_img)
+        if save_path is not None:
+            #os.makedirs(os.path.dirname(save_path) + "/", exist_ok=True)
+            #save_img(face, save_path)
+            pass
+
+    roi_imgs = torch.stack(roi_imgs)
+
     return roi_imgs
 
 

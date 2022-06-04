@@ -1,9 +1,8 @@
-# from util import CropRoiImg
-import cv2
 from util import Get_normal_bbox
 import numpy as np
+import cv2
 
-from detection import mtcnn_detection, mtcnn_get_embeddings, mtcnn_recognition
+from detection import get_embeddings, recognizer
 from retinaface_utils.util import retinaface_detection
 
 def Detection(img, args, model_args):
@@ -12,17 +11,15 @@ def Detection(img, args, model_args):
     # ======== ML Part ============
     device = model_args['Device']
 
-    if args['DETECTOR'] == 'mtcnn':
-        bboxes = mtcnn_detection(model_args['Detection'], img, device)
-    else:
-        bboxes = retinaface_detection(model_args['Detection'], img, device)
+    bboxes = retinaface_detection(model_args['Detection'],img, device)
 
-    if args['DEBUG_MODE']:
-        print(bboxes)
     # 이미지 범위 외로 나간 bbox값 범위 처리
     if bboxes is not None:
         bboxes = Get_normal_bbox(img.shape, bboxes)
     # =============================
+
+    if args['DEBUG_MODE']:
+        print(bboxes)
 
     return bboxes
 
@@ -39,13 +36,13 @@ def Recognition(img, bboxes, args, model_args, known_ids):
     # ======== ML Part ============
     device = model_args['Device']
 
-    faces, unknown_embeddings = mtcnn_get_embeddings(model_args['Mtcnn'],
-                                                     model_args['Recognition'],
-                                                     img, bboxes, device)
+    faces, unknown_embeddings = get_embeddings(model_args['Recognition'],
+                                            img, bboxes, device)
+                                            
     if args['DEBUG_MODE']:
         print(faces.shape)
+        print(unknown_embeddings.shape)
 
-    if known_ids is not None:
         if known_ids:
             # IoU 비교로 겹치는 대상을 known_ids.iou_weights에 저장
             known_ids.check_iou(bboxes)
@@ -57,12 +54,11 @@ def Recognition(img, bboxes, args, model_args, known_ids):
                 cv2.rectangle(img, (known_bbox[0], known_bbox[1]), (known_bbox[2], known_bbox[3]),
                                 (255, 0, 0), 2)
 
-    face_ids, result_probs = mtcnn_recognition(img, model_args['Face_db'],
-                                            unknown_embeddings,
-                                            args['RECOG_THRESHOLD'], known_ids)
+    face_ids, result_probs = recognizer(model_args['Face_db'],
+                                        args['RECOG_THRESHOLD'])
 
     if args['DEBUG_MODE']:
-        print(face_ids)
+        print(result_probs)
     # =============================
 
     return face_ids
