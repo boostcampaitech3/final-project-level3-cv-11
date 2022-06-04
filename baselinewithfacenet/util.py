@@ -6,10 +6,6 @@ from PIL import Image
 import torch
 
 
-def GetFaceFeature(img):
-    return []
-
-
 def AddFaceData(_get_vector: bool, imgs: list=[]) -> list:
     assert type(imgs) == list, 'input list of image'
 

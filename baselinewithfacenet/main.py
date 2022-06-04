@@ -1,23 +1,23 @@
 from time import time
 import cv2
-from PIL import Image
 import torch
-import torchvision
 
 from util import Mosaic, DrawRectImg
 from args import Args
 
 import ml_part as ML
 from database import load_face_db
-from facenet_pytorch import MTCNN, InceptionResnetV1
+from facenet_pytorch import InceptionResnetV1
 
 from retinaface_utils.utils.model_utils import load_model
 from retinaface_utils.models.retinaface import RetinaFace
 from retinaface_utils.data.config import cfg_mnet
 
+
 def init(args):
-    model_args = {}
     # 초기에 불러올 모델을 설정하는 공간입니다.
+    model_args = {}
+
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
     model_args['Device'] = device
     if args['DEBUG_MODE']:
@@ -39,10 +39,10 @@ def init(args):
     model_args['Recognition'] = resnet
 
     # Load Face DB
+    image_path = "../data/test_images"
     db_path = "./database"
 
-    face_db = load_face_db("../data/test_images",
-                            db_path,
+    face_db = load_face_db(image_path, db_path,
                             device, args, model_args)
 
     model_args['Face_db'] = face_db
@@ -68,7 +68,6 @@ def ProcessImage(img, args, model_args):
     processed_img = DrawRectImg(img, bboxes, face_ids)
 
     return processed_img
-    # return img
 
 
 def main(args):
@@ -86,8 +85,7 @@ def main(args):
 
     # =================== Video =======================
     elif args['PROCESS_TARGET'] == 'Video':
-        video_path = '../data/dest_images/kakao/song.mp4'
-        #video_path = '../paddlevideo/mp4s/test.mp4'
+        video_path = args['VIDEO_DIR']
 
         start = time()
         fourcc = cv2.VideoWriter_fourcc(*'XVID')

@@ -33,6 +33,3 @@ def recognizer(face_db, unknown_embeddings, recog_thr) :
             face_ids.append('unknown')
         probs.append(result_probs)
     return face_ids, probs
-
-
-    

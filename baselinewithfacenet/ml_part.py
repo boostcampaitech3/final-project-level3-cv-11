@@ -1,5 +1,3 @@
-# from util import CropRoiImg
-import numpy as np
 from util import Get_normal_bbox
 
 from detection import get_embeddings, recognizer
@@ -11,7 +9,7 @@ def Detection(img, args, model_args):
     # ======== ML Part ============
     device = model_args['Device']
 
-    bboxes = retinaface_detection(model_args['Detection'], img, device)
+    bboxes = retinaface_detection(model_args['Detection'],img, device)
 
     # 이미지 범위 외로 나간 bbox값 범위 처리
     if bboxes is not None:
