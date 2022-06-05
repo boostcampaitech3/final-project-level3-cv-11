@@ -53,7 +53,7 @@ def init(args):
     # Load Face DB
     db_path = "./database"
 
-    face_db = load_face_db("../data_/test_images",
+    face_db = load_face_db("../data_/for_junha",
                             db_path,
                             device, args, model_args)
 
@@ -126,7 +126,7 @@ def main(args):
 
     # =================== Video =======================
     elif args['PROCESS_TARGET'] == 'Video':
-        video_path = '../data_/dest_images/son_clip.mp4'
+        video_path = '../data_/dest_images/mudo.mp4'
 
         cap = cv2.VideoCapture(video_path)
         fourcc = cv2.VideoWriter_fourcc(*'XVID')

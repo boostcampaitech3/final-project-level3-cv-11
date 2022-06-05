@@ -182,7 +182,8 @@ def yolo_detection(model, image, device):
             for j in range(det.size()[0]):
                 xyxy = det[j, :4].view(-1).tolist()
                 bboxes.append(xyxy)
-                probs.append(det[j, 4])
+                prob = det[j, 4].view(-1).tolist()
+                probs.append(prob)
     # print(bboxes)
     return np.array(bboxes), np.array(probs)
 

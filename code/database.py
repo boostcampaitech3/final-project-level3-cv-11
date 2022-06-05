@@ -107,7 +107,7 @@ def build_db(known_images_path, face_db_path, img_db_path, device, args, model_a
         elif args['DETECTOR'] == 'yolo':
             x_np = np.array(x)
             x = cv2.cvtColor(x_np, cv2.COLOR_RGB2BGR)
-            bboxes = yolo_detection(detector, x, device)
+            bboxes, probs = yolo_detection(detector, x, device)
 
         assert bboxes is not None, f'no detection in {name}'
         faces, embedding = get_embeddings(recognizer, x, bboxes, device)
