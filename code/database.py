@@ -100,9 +100,20 @@ def build_db(known_images_path, face_db_path, img_db_path, device, args, model_a
     for x, y in loader : 
         name = dataset.idx_to_class[y]
         
+<<<<<<< HEAD
         x_np = np.array(x)
         x = cv2.cvtColor(x_np, cv2.COLOR_RGB2BGR) 
         bboxes, probs = ML.Detection(x, args, model_args)
+=======
+        if args['DETECTOR'] == 'retinaface':
+            x_np = np.array(x)
+            x = cv2.cvtColor(x_np, cv2.COLOR_RGB2BGR)
+            bboxes = retinaface_detection(detector, x, device)
+        elif args['DETECTOR'] == 'yolo':
+            x_np = np.array(x)
+            x = cv2.cvtColor(x_np, cv2.COLOR_RGB2BGR)
+            bboxes, probs = yolo_detection(detector, x, device)
+>>>>>>> eb528c8901f19d461b90132bf998d270d1f8b793
 
         assert bboxes is not None, f'no detection in {name}'
 
