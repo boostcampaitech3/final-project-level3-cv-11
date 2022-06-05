@@ -1,3 +1,4 @@
+from tkinter import X
 import torch
 import os
 import warnings 
@@ -5,12 +6,11 @@ import cv2
 import numpy as np
 import pickle
 
+import ml_part as ML
 from PIL import Image
 from torch.utils.data import DataLoader 
 from torchvision import datasets
 from detection import get_embeddings
-from retinaface_utils.util import retinaface_detection
-from detect_face import yolo_detection
 
 warnings.filterwarnings('ignore')
 workers = 0 if os.name == 'nt' else 4 
@@ -100,17 +100,14 @@ def build_db(known_images_path, face_db_path, img_db_path, device, args, model_a
     for x, y in loader : 
         name = dataset.idx_to_class[y]
         
-        if args['DETECTOR'] == 'retinaface':
-            x_np = np.array(x)
-            x = cv2.cvtColor(x_np, cv2.COLOR_RGB2BGR)
-            bboxes = retinaface_detection(detector, x, device)
-        elif args['DETECTOR'] == 'yolo':
-            x_np = np.array(x)
-            x = cv2.cvtColor(x_np, cv2.COLOR_RGB2BGR)
-            bboxes = yolo_detection(detector, x, device)
+        x_np = np.array(x)
+        x = cv2.cvtColor(x_np, cv2.COLOR_RGB2BGR) 
+        bboxes, probs = ML.Detection(x, args, model_args)
 
         assert bboxes is not None, f'no detection in {name}'
+
         faces, embedding = get_embeddings(recognizer, x, bboxes, device)
+
         embedding = embedding.numpy()
         if name in face_db:
             face_db[name].append(embedding)

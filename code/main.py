@@ -10,7 +10,6 @@ from database import load_face_db
 from facenet_pytorch import InceptionResnetV1
 
 from deep_sort.deep_sort_face import DeepSortFace
-from deep_sort.visualization import draw_boxes
 
 from retinaface_utils.utils.model_utils import load_model
 from retinaface_utils.models.retinaface import RetinaFace
@@ -37,7 +36,7 @@ def init(args):
         model_detection.to(device)
         model_detection.eval()
     else: # yolo
-        model_detection = load_models("./weights/yolov5n-0.5.pt", device)
+        model_detection = load_models("./weights/yolov5-blazeface.pt", device)
         model_detection.to(device)
         model_detection.eval()
 
@@ -73,10 +72,10 @@ def ProcessImage(img, args, model_args):
     face_ids, probs = ML.Recognition(img, bboxes, args, model_args)
 
     # Mosaic
-    img = Mosaic(img, bboxes, face_ids, n=10)
+    processed_img = Mosaic(img, bboxes, face_ids, n=10)
 
     # 특정인에 bbox와 name을 보여주고 싶으면
-    processed_img = DrawRectImg(img, bboxes, face_ids)
+    processed_img = DrawRectImg(processed_img, bboxes, face_ids)
 
     return processed_img
 
@@ -100,10 +99,10 @@ def ProcessVideo(img, args, model_args, id_name):
         if identities[-1] not in id_name.keys(): # Update가 생기면
             id_name, probs = ML.Recognition(img, bbox_xyxy, args, model_args, id_name, identities)                                       
 
-        img = Mosaic(img, bbox_xyxy, identities, 10, id_name)
+        processed_img = Mosaic(img, bbox_xyxy, identities, 10, id_name)
     
         # 특정인에 bbox와 name을 보여주고 싶으면
-        processed_img = DrawRectImg(img, bbox_xyxy, identities, id_name)
+        # processed_img = DrawRectImg(processed_img, bbox_xyxy, identities, id_name)
     else:
         processed_img = img
     
@@ -154,7 +153,9 @@ def main(args):
 
         cap.release()
         out.release()
-        print(f'fps: {fps} time: {time() - start} done.')
+        print(f'original video fps: {fps}')
+        print(f'time: {time() - start}')
+        print('done.')
     # ====================== Video ===========================
 
     else: # WebCam

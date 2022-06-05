@@ -4,7 +4,7 @@ import argparse
 class Args(object):
     parser = argparse.ArgumentParser(description='Arguments for Unknown mosaic')
     parser.add_argument('--process_target', type=str, default='Video', help='Image, Video, Cam')
-    parser.add_argument('--image_dir', default="../data/dest_images/findobama/twopeople.jpeg", help='Directory to image')
+    parser.add_argument('--image_dir', default="../data_/dest_images/wls.jpg", help='Directory to image')
     parser.add_argument('--bbox_thrs', type=int, default=30, help='Threshold of bounding box')
     parser.add_argument('--recog_thrs', type=float, default=0.8, help='Threshold of recognition')
     parser.add_argument('--detector', type=str, default='retinaface', help='Detection model: mtcnn, retinaface')
