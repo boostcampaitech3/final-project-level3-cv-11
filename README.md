@@ -1,6 +1,7 @@
 # MOFY: MOsaic For You 실시간 불특정 인물 비식별화
 
 ![song](src/song.webp)
+
 배우 송중기를 제외한 모든 인물 비식별화 결과 (식별 대상에 박스 처리)
 
 
