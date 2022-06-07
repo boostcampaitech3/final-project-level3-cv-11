@@ -49,8 +49,7 @@
 - Face Blurring: 등록된 인물과 일치하는 대상을 제외한 인원에 대해 비식별화 처리
 - Face Tracking: 실시간 처리와 예측 오차를 줄이기 위해 이전 프레임의 정보를 활용하여 인물 식별 기능 강화 
 
-![modelflow](src/modelflow.jpg)
-![mosaic](src/mosaic.jpg)
+<img src=src/modelflow.jpg width="700" />
 
 
 ## 추가 발전 방향
