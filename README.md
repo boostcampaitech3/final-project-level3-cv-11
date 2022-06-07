@@ -31,12 +31,6 @@
 ## Model 
 ![model_pipeline](src/model_pipeline.png)
 
-
-
-## Model
-
-![model_pipeline](https://user-images.githubusercontent.com/68208055/172374498-61aaac11-f06b-4d78-9e06-cbf559e76d94.png)
-
 - Face Embedding : 식별화 대상의 얼굴 영역을 embedding하여 데이터베이스화
 - Face Detection : 영상 내 사람의 얼굴 탐지 
 - Face Recognition: 탐지된 얼굴을 식별 인물 데이터와 비교하여 일치도 검사
