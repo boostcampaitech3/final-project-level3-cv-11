@@ -15,7 +15,7 @@ import streamlit as st
 from web.streamlit_utils.confirm_button_hack import cache_on_button_press
 from web.streamlit_utils import reload; import importlib
 
-from web.streamlit_pages import register_face, process_img, process_vid, process_cam # import your pages here
+from web.streamlit_pages import preset, register_face, process_img, process_vid, process_cam # import your pages here
 from web.streamlit_pages.multipage import MultiPage
 
 
@@ -31,6 +31,7 @@ st.set_page_config(page_title="MOFY: MOsaic For You", page_icon=favicon, layout=
 app = MultiPage()
 
 # Add all your application here
+app.add_page("샘플 페이지", preset.app)
 app.add_page("얼굴 정보 등록", register_face.app)
 app.add_page("이미지 모자이크 처리", process_img.app)
 app.add_page("비디오 모자이크 처리", process_vid.app)
