@@ -1,6 +1,8 @@
 # MOFY: MOsaic For You 실시간 불특정 인물 비식별화
 
-[gif]()
+![song](src/song.webp)
+배우 송중기를 제외한 모든 인물 비식별화 결과 (식별 대상에 박스 처리)
+
 
 ## 멤버
 | 김영운 | 이승현 | 임서현 | 전성휴 | 허석용 |  
@@ -22,14 +24,23 @@
 
 ## Demo 
 
-영상을 대략 5초 정도의 gif들로 업로드
+1. 축구선수 손흥민을 제외한 모든 인물 비식별화 결과 (식별 대상에 박스 처리)
+![son](src/son.webp)
+
+2. 뉴스에서 기자와 인터뷰이를 제외한 모든 인물 비식별화 결과
+![interview](src/interview.webp)
+
+3. 인터넷 방송에서 방송자와 인터뷰이를 제외한 모든 인물 비식별화 결과
+![inbang](src/inbang.webp)
 
 
 ## Flow Chart
 ![flowchart1](src/flowchart1.jpeg)
 
+
 ## Model 
 ![model_pipeline](src/model_pipeline.png)
+
 
 - Face Embedding : 식별화 대상의 얼굴 영역을 embedding하여 데이터베이스화
 - Face Detection : 영상 내 사람의 얼굴 탐지 
