@@ -17,6 +17,8 @@ from retinaface_utils.data.config import cfg_mnet
 
 from detect_face import load_models
 
+from moviepy.editor import VideoFileClip, AudioFileClip
+
 
 def init(args):
     model_args = {}
@@ -126,6 +128,9 @@ def main(args):
     # =================== Video =======================
     elif args['PROCESS_TARGET'] == 'Video':
         video_path = '../data_/dest_images/mudo.mp4'
+        if args['SOUND']:
+            clip = VideoFileClip(video_path)
+            audio_data = clip.audio
 
         cap = cv2.VideoCapture(video_path)
         fourcc = cv2.VideoWriter_fourcc(*'XVID')
@@ -153,6 +158,11 @@ def main(args):
 
         cap.release()
         out.release()
+        if args['SOUND']:
+            video = VideoFileClip(args['SAVE_DIR'] + '/output.mp4')
+            output = video.set_audio(audio_data)
+            output.write_videofile(args['SAVE_DIR'] + '/output_sound.mp4')
+
         print(f'original video fps: {fps}')
         print(f'time: {time() - start}')
         print('done.')

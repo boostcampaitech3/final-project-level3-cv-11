@@ -15,6 +15,7 @@ class Args(object):
     parser.add_argument('--pretrained_path', default=None, help='Pre-trained model path') # Train-> Fine tuning, Test-> Inference
     parser.add_argument('--debug_mode', type=bool, default=False, help='print on off')
     parser.add_argument('--tracking', action='store_true', help='tracking on off')
+    parser.add_argument('--sound', type=bool, default= False, help='Option whether the output video gets sound')
     # parser.add_argument('--input_mode', type=str, default='tv', help='cv2, PIL, tv: torchvision')
 
 
@@ -32,5 +33,6 @@ class Args(object):
         "PRETRAINED_PATH": parse.pretrained_path,
         "DEBUG_MODE": parse.debug_mode,
         "TRACKING": parse.tracking,
+        "SOUND": parse.sound,
         # "INPUT_MODE": parse.input_mode,
     }
