@@ -337,4 +337,4 @@ def load_weights(mdl, name):
 #     return torch_home
 
 def get_model_weights_dir():
-    return "/opt/ml/canvas-mofy/.assets/model_weights/"
+    return "/opt/ml/input/project/canvas-mofy/.assets/model_weights/"

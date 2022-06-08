@@ -2,6 +2,7 @@
 
 # 인증서 파일
 .assets/ssl_certificates/*.pem
+.assets/.ssl_certificates/*.pem
 
 # 출력 결과
 .result_output/*.mp4
@@ -14,6 +15,9 @@
 
 # 작업 중인 폴더
 face_process/
+
+# 개인 사진
+.assets/sample_input/test_images2/seokyong/*
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,venv,jupyternotebooks,visualstudiocode
