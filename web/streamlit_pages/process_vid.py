@@ -20,16 +20,16 @@ def app():
         files = [
             ('files', (uploaded_file.name, bytes_data, uploaded_file.type))
         ]
-        response = requests.post("http://localhost:8001/order", data=args, files=files)
+        response = requests.post("http://localhost:8001/order", files=files) # data=args
         result_str = response.json()["products"][0]["result"]
         st.write(result_str) # Success
         
         col1, col2 = st.columns(2)
         
         col1.header("Original")
-        with open(".result_output/input_video.mp4", "wb") as fp:
-            fp.write(bytes_data)
+        # with open(".result_output/input_video.mp4", "wb") as fp:
+        #     fp.write(bytes_data)
         col1.video(".result_output/input_video.mp4")
-        
+
         col2.header("Result")
         col2.video(".result_output/output_video.mp4")

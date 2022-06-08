@@ -33,7 +33,7 @@ class PNet(nn.Module):
         self.training = False
 
         if pretrained:
-            state_dict_path = "/opt/ml/canvas-mofy/.assets/model_weights/detector/mtcnn/pnet.pt" # os.path.join(os.path.dirname(__file__), '../data/pnet.pt')
+            state_dict_path = "./.assets/model_weights/detector/mtcnn/pnet.pt" # os.path.join(os.path.dirname(__file__), '../data/pnet.pt')
             state_dict = torch.load(state_dict_path)
             self.load_state_dict(state_dict)
 
@@ -78,7 +78,7 @@ class RNet(nn.Module):
         self.training = False
 
         if pretrained:
-            state_dict_path = "/opt/ml/canvas-mofy/.assets/model_weights/detector/mtcnn/rnet.pt" # os.path.join(os.path.dirname(__file__), '../data/rnet.pt')
+            state_dict_path = "/opt/ml/input/project/canvas-mofy/.assets/model_weights/detector/mtcnn/rnet.pt" # os.path.join(os.path.dirname(__file__), '../data/rnet.pt')
             state_dict = torch.load(state_dict_path)
             self.load_state_dict(state_dict)
 
@@ -131,7 +131,7 @@ class ONet(nn.Module):
         self.training = False
 
         if pretrained:
-            state_dict_path = "/opt/ml/canvas-mofy/.assets/model_weights/detector/mtcnn/onet.pt" # os.path.join(os.path.dirname(__file__), '../data/onet.pt')
+            state_dict_path = "/opt/ml/input/project/canvas-mofy/.assets/model_weights/detector/mtcnn/onet.pt" # os.path.join(os.path.dirname(__file__), '../data/onet.pt')
             state_dict = torch.load(state_dict_path)
             self.load_state_dict(state_dict)
 

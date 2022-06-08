@@ -7,7 +7,7 @@ import torch
 
 from configs.server import rtc_configuration
 from web.fastapi_engine.model_pipeline import init_model_args
-from web.fastapi_engine.detection import load_face_db
+from web.fastapi_engine.database import load_face_db
 from web.fastapi_engine import ml_part as ML
 from web.fastapi_engine.util import Mosaic, DrawRectImg
 from web.fastapi_engine.model_assignment import assign_detector, assign_recognizer
