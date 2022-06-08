@@ -26,16 +26,19 @@
 ## Demo 
 
 1. 축구선수 손흥민을 제외한 모든 인물 비식별화 결과 (식별 대상에 박스 처리)
+- [손흥민 클립 출처: 손세이셔널 – 그를 만든 시간 (tvN 시사/교양)]
 ![son](src/son.webp)
-[손흥민 클립 출처: 손세이셔널 – 그를 만든 시간 (tvN 시사/교양)]
+
 
 2. 뉴스에서 기자와 인터뷰이를 제외한 모든 인물 비식별화 결과
+- [뉴스 클립 출처: NEWS A 성혜란 팩트맨 인터뷰(Channel A)]
 ![interview](src/interview.webp)
-[뉴스 클립 출처: NEWS A 성혜란 팩트맨 인터뷰(Channel A)]
+
 
 3. 인터넷 방송에서 방송자와 인터뷰이를 제외한 모든 인물 비식별화 결과
+- [유튜브 클립 출처: afreeca TV BJ 남순 NS 유튜브 (Youtube)]
 ![inbang](src/inbang.webp)
-[뉴스 클립 출처: NEWS A 성혜란 팩트맨 인터뷰(Channel A)]
+
 
 ## Flow Chart
 ![flowchart1](src/flowchart1.jpeg)
