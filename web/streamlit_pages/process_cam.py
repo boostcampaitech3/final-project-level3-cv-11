@@ -1,7 +1,6 @@
 import av
 import cv2
 import numpy as np
-import requests
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer
 import torch
@@ -89,47 +88,10 @@ class VideoProcessor:
 
 def app():
     # 타겟 데이터가 웹캠인 경우 활성화 되는 페이지
-    # st.session_state.process_target = "cam"
-    # st.session_state.save_face_embedding = False
-    
-    # st.text(""); st.text("") # 공백
-    # st.markdown("###### 알고리즘 선택")
-    # choice_col1, choice_col2, choice_col3 = st.columns(3)
-    # st.session_state.which_detector = choice_col1.selectbox(
-    #     "Detection model", 
-    #     ("MTCNN", "RetinaFace", "YOLOv5", "Facesbox", "HaarCascades"), 
-    #     index=2
-    # )
-    # st.session_state.which_recognizer = choice_col2.selectbox(
-    #     "Recognition model", 
-    #     ("FaceNet", "ArcFace", "ArcFace_Mofy"), 
-    #     index=0
-    # )
-    # st.session_state.which_tracker = choice_col3.selectbox(
-    #     "Tracking algorithm", 
-    #     ("DeepSort", ), 
-    #     index=0
-    # )
-    # st.session_state.do_detection = True
-    # st.session_state.do_recognition = True
-    # st.session_state.do_tracking = True
+    st.session_state.save_face_embedding = False
     
     st.text(""); st.text("") # 공백
     st.markdown("###### 실시간 웹캠 영상 처리")
-    
-#     args = {
-#         "PROCESS_TARGET": st.session_state.process_target,
-#         "SAVE_FACE_EMBEDDING": st.session_state.save_face_embedding,
-        
-#         "DO_DETECTION": st.session_state.do_detection,
-#         # "WHICH_DETECTOR": st.session_state.which_detector,
-#         "DO_RECOGNITION": st.session_state.do_recognition,
-#         # "WHICH_RECOGNIZER": st.session_state.which_recognizer,
-#         "DO_TRACKING": st.session_state.do_tracking,
-#         # "WHICH_TRACKER": st.session_state.which_tracker
-#     }
-#     r = requests.post("http://localhost:8001/settings", json=args)
-    # st.write(r)
     
     webrtc_streamer(
         key="webcam", video_processor_factory=VideoProcessor,

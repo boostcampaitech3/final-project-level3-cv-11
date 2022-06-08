@@ -34,7 +34,6 @@ class DummyFile:
 
 def app():
     # DB에 얼굴 사진을 등록
-    st.session_state.process_target = "img"
     st.session_state.save_face_embedding = True
     
     if "target_type" not in st.session_state:
@@ -42,20 +41,6 @@ def app():
     
     st.text(""); st.text("") # 공백
     st.markdown("###### 데이터베이스에 얼굴을 등록")
-    
-    # st.text(""); st.text("") # 공백
-    # st.markdown("###### 알고리즘 선택")
-    # choice_col1, choice_col2, choice_col3 = st.columns(3)
-    # st.session_state.which_detector = choice_col1.selectbox(
-    #     "Detection model", 
-    #     ("MTCNN", "RetinaFace", "YOLOv5", "FaceBoxes", "HaarCascades"), 
-    #     index=2
-    # )
-    # st.session_state.which_recognizer = choice_col2.selectbox(
-    #     "Recognition model", 
-    #     ("FaceNet", "ArcFace", "ArcFace_Mofy"), 
-    #     index=0
-    # )
 
     st.text(""); st.text("") # 공백
     uploaded_name = st.text_input("등록할 사람의 이름을 입력하세요", value="guest")
@@ -92,24 +77,8 @@ def app():
                 bytes_data = None
         
         if bytes_data:
-            st.session_state.do_detection = True
-            st.session_state.do_recognition = True
-
             st.text(""); st.text("") # 공백
             st.markdown("###### 데이터 처리 결과")
-
-            args = {
-                "process_target": st.session_state.process_target,
-                "save_face_embedding": st.session_state.save_face_embedding,
-                "save_face_name": uploaded_name,
-                
-                "do_detection": st.session_state.do_detection,
-                # "which_detector": st.session_state.which_detector,
-                "do_recognition": st.session_state.do_recognition,
-                # "which_recognizer": st.session_state.which_recognizer
-            }
-            r = requests.post("http://localhost:8001/settings", json=args)
-            # st.write(r)
             
             files = [
                 ('files', (uploaded_file.name, bytes_data, uploaded_file.type))
@@ -120,7 +89,3 @@ def app():
                 st.write(f"{uploaded_name} 님의 얼굴을 저장 성공했습니다.")
             else:
                 st.write("저장 실패했습니다. 다시 시도해주세요.")
-
-        else:
-            st.session_state.do_detection = False
-            st.session_state.do_recognition = False

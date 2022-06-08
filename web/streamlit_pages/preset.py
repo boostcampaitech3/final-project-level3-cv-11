@@ -3,10 +3,12 @@ import streamlit as st
 
 def app():
     # 예시 샘플 페이지
-    if "process_target" not in st.session_state:
-        st.session_state.process_target = None
-    elif st.session_state.process_target not in ("ex1", "ex2", "ex3", "ex4"):
-        st.session_state.process_target = None
+    st.session_state.process_target = None
+    
+    if "target_type" not in st.session_state:
+        st.session_state.target_type = None
+    elif st.session_state.target_type not in ("ex1", "ex2", "ex3", "ex4"):
+        st.session_state.target_type = None
     
     st.text(""); st.text("") # 공백
     st.markdown("###### 예시 샘플을 선택해주세요")
@@ -26,19 +28,19 @@ def app():
     ex4.image(".assets/sample_input/examples/example4/example_thumbnail4.jpg")
     
     if button1:
-        st.session_state.process_target = "ex1"
+        st.session_state.target_type = "ex1"
     elif button2:
-        st.session_state.process_target = "ex2"
+        st.session_state.target_type = "ex2"
     elif button3:
-        st.session_state.process_target = "ex3"
+        st.session_state.target_type = "ex3"
     elif button4:
-        st.session_state.process_target = "ex4"
+        st.session_state.target_type = "ex4"
     
     
-    if "process_target" in st.session_state:
+    if "target_type" in st.session_state:
         st.text("") # 공백
         
-        if st.session_state.process_target == "ex1":
+        if st.session_state.target_type == "ex1":
             st.markdown("**소요 시간** : 00초")
             
             col1, col2 = st.columns(2) # markdown 이전에 있어야 글이 위로 감
@@ -47,7 +49,7 @@ def app():
             col2.header("Result")
             col2.image(".assets/sample_input/examples/example1/example_output1.png")
             
-        elif st.session_state.process_target == "ex2":
+        elif st.session_state.target_type == "ex2":
             st.markdown("**소요 시간** : 00초")
             
             col1, col2 = st.columns(2) # markdown 이전에 있어야 글이 위로 감
@@ -56,7 +58,7 @@ def app():
             col2.header("Result")
             col2.image(".assets/sample_input/examples/example2/example_output2.png")
             
-        elif st.session_state.process_target == "ex3":
+        elif st.session_state.target_type == "ex3":
             st.markdown("**소요 시간** : 00초")
             
             col1, col2 = st.columns(2) # markdown 이전에 있어야 글이 위로 감
@@ -65,7 +67,7 @@ def app():
             col2.header("Result")
             col2.video(".assets/sample_input/examples/example3/example_output3.mp4")
             
-        elif st.session_state.process_target == "ex4":
+        elif st.session_state.target_type == "ex4":
             st.markdown("**소요 시간** : 00초")
             
             col1, col2 = st.columns(2) # markdown 이전에 있어야 글이 위로 감
