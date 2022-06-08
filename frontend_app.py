@@ -13,7 +13,7 @@ import streamlit as st
 
 # Custom imports
 from web.streamlit_utils.confirm_button_hack import cache_on_button_press
-from web.streamlit_utils import reload; import importlib
+import web.streamlit_utils.reload; import importlib
 
 from web.streamlit_pages import preset, register_face, process_img, process_vid, process_cam # import your pages here
 from web.streamlit_pages.multipage import MultiPage
@@ -21,7 +21,7 @@ from web.streamlit_pages.multipage import MultiPage
 
 root_password = "password"
 if "authenticated" not in st.session_state:
-    st.session_state.authenticated = True # 비밀번호 기능을 활성화 하려면 False
+    st.session_state.authenticated = False # 비밀번호 기능을 활성화 하려면 False
 
 
 favicon = Image.open(".assets/doc/ico/MOFY_32x32.png")
@@ -44,8 +44,12 @@ if not st.session_state.authenticated:
     
     @cache_on_button_press("비밀번호 입력")
     def authenticate(password) -> bool:
-        return password == root_password
+        if st.session_state.username == "root":
+            return password == root_password
+        else:
+            return True # TODO: 현재 root 이외의 모든 유저는 무조건 통과
 
+    st.session_state.username = st.text_input("회원님의 이름을 입력하세요.", value="guest")
     password = st.text_input("비밀번호를 입력하세요.", type="password")
     if authenticate(password):
         st.success('You are authenticated!')
@@ -58,7 +62,7 @@ if not st.session_state.authenticated:
             # 코드 변경 시 streamlit은 자동으로 재실행
             #   - TODO: 다른 사람이 로그인해서 코드 변경 시 페이지가 재실행 되는 상황이 발생할 수도?
             dummy_script.write(f"access_datetime = '{datetime.now().strftime('%y%m%d %H%M%S')}'")
-        importlib.reload(reload)
+        importlib.reload(web.streamlit_utils.reload)
         st.button("바로 접속") # 이상하게 3초 후에 무작위로 새로고침이 안되는 현상이 있음. 빈 버튼과 상호작용 시 새로고침 됨.
         
     else:
@@ -66,7 +70,9 @@ if not st.session_state.authenticated:
 
 else: # if st.session_state.authenticated:
     # Title of the main page
-    st.image(".assets/doc/img/MOFY_logo.png")
+    col1, col2 = st.columns(2)
+    col1.image(".assets/doc/img/MOFY_logo.png")
+    col2.markdown(f'<p align="right">안녕하세요, <b>{st.session_state.username}</b>님!</p>', unsafe_allow_html=True)
     st.title("MOFY: MOsaic For You")
     
     # The main app
