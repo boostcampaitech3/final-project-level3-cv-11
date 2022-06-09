@@ -5,6 +5,7 @@ class Args(object):
     parser = argparse.ArgumentParser(description='Arguments for Unknown mosaic')
     parser.add_argument('--process_target', type=str, default='Video', help='Image, Video, Cam')
     parser.add_argument('--image_dir', default="../data_/dest_images/wls.jpg", help='Directory to image')
+    parser.add_argument('--video_dir', default="../data_/dest_images/kakao/song.mp4", help='Directory to video')
     parser.add_argument('--bbox_thrs', type=int, default=30, help='Threshold of bounding box')
     parser.add_argument('--recog_thrs', type=float, default=0.8, help='Threshold of recognition')
     parser.add_argument('--detector', type=str, default='retinaface', help='Detection model: mtcnn, retinaface')
@@ -15,6 +16,7 @@ class Args(object):
     parser.add_argument('--pretrained_path', default=None, help='Pre-trained model path') # Train-> Fine tuning, Test-> Inference
     parser.add_argument('--debug_mode', type=bool, default=False, help='print on off')
     parser.add_argument('--tracking', action='store_true', help='tracking on off')
+    parser.add_argument('--sound', type=bool, default= False, help='Option whether the output video gets sound')
     # parser.add_argument('--input_mode', type=str, default='tv', help='cv2, PIL, tv: torchvision')
 
 
@@ -22,6 +24,7 @@ class Args(object):
     params = {
         "PROCESS_TARGET": parse.process_target,
         "IMAGE_DIR": parse.image_dir, 
+        "VIDEO_DIR": parse.video_dir,
         "BBOX_THRESHOLD": parse.bbox_thrs, 
         "RECOG_THRESHOLD": parse.recog_thrs,
         "DETECTOR": parse.detector,
@@ -32,5 +35,6 @@ class Args(object):
         "PRETRAINED_PATH": parse.pretrained_path,
         "DEBUG_MODE": parse.debug_mode,
         "TRACKING": parse.tracking,
+        "SOUND": parse.sound,
         # "INPUT_MODE": parse.input_mode,
     }
