@@ -20,7 +20,7 @@ def init_model_args(args, model_detection=None, model_recognition=None, algo_tra
             model_args["Recognition"] = model_recognition
             
             # Load Face DB
-            face_db_path = ".database/"
+            face_db_path = f".database/{args['USERNAME']}/"
             face_db = load_face_db(".assets/sample_input/test_images2",
                                      face_db_path, 
                                      device, args, model_args)

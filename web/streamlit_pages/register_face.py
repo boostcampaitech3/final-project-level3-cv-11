@@ -1,5 +1,9 @@
 import cv2
+import datetime
+import hashlib
+import os
 import requests
+from shutil import rmtree
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer
 
@@ -7,7 +11,6 @@ from configs.server import rtc_configuration
 
 
 current_frame = None
-current_frame_bytes = None
 
 class VideoProcessor:
     def __init__(self):
@@ -21,21 +24,17 @@ class VideoProcessor:
         
         return frame
 
-    def current_frame_to_bytes():
-        global current_frame, current_frame_bytes
+    def save_current_frame():
+        global current_frame
         frame_ndarray = current_frame.to_ndarray(format="bgr24")
-        is_success, im_buf_arr = cv2.imencode(".jpg", frame_ndarray)
-        current_frame_bytes = im_buf_arr.tobytes()
-
-class DummyFile:
-    name = "temp.jpg"
-    type = "image/jpeg"
+        
+        if not os.path.exists(st.session_state.output_dir):
+            os.mkdir(st.session_state.output_dir)
+        cv2.imwrite(st.session_state.output_dir + "input.jpg", frame_ndarray)
 
 
 def app():
     # DB에 얼굴 사진을 등록
-    st.session_state.save_face_embedding = True
-    
     if "target_type" not in st.session_state:
         st.session_state.target_type = None # 초기값
     
@@ -59,33 +58,48 @@ def app():
     if st.session_state.target_type is None:
         pass
     else:
+        now = datetime.datetime.now()
+        shastr = hashlib.sha224(str(now).encode()).hexdigest()[:8]
+        st.session_state.output_dir = f".result_output/{shastr}/"
         
         if st.session_state.target_type == "IMAGE":
             uploaded_file = st.file_uploader("등록할 사람의 사진을 업로드하세요", type=["png", "jpg", "jpeg"])
-            bytes_data = None if uploaded_file is None else uploaded_file.getvalue()
+            if uploaded_file:
+                uploaded_file_type = uploaded_file.name.split('.')[-1]
+                if not os.path.exists(st.session_state.output_dir):
+                    os.mkdir(st.session_state.output_dir)
+                with open(st.session_state.output_dir + f"input.{uploaded_file_type}", "wb") as picfile:
+                    picfile.write(uploaded_file.getvalue())
+                input_file_name = st.session_state.output_dir + f"input.{uploaded_file_type}"
+                output_file_name = st.session_state.output_dir + f"output.{uploaded_file_type}"
+            
         else: # if st.session_state.target_type == "WEBCAM":
             webrtc_streamer(
                 key="webcam", video_processor_factory=VideoProcessor,
                 rtc_configuration=rtc_configuration,
                 media_stream_constraints={"video": True, "audio": False}
             )
-            if st.button("캡쳐!", on_click=VideoProcessor.current_frame_to_bytes):
-                global current_frame_bytes
-                bytes_data = current_frame_bytes
-                uploaded_file = DummyFile()
-            else:
-                bytes_data = None
+            if st.button("캡쳐!", on_click=VideoProcessor.save_current_frame):
+                input_file_name = st.session_state.output_dir + "input.jpg"
+                output_file_name = st.session_state.output_dir + "output.jpg"
         
-        if bytes_data:
+        if os.path.exists(st.session_state.output_dir):
             st.text(""); st.text("") # 공백
             st.markdown("###### 데이터 처리 결과")
             
-            files = [
-                ('files', (uploaded_file.name, bytes_data, uploaded_file.type))
-            ]
-            response = requests.post("http://localhost:8001/order", files=files)
+            args = {
+                "USERNAME": st.session_state.username,
+                "REQUEST_ID": shastr,
+
+                "INPUT_FILE_NAME": input_file_name,
+                "OUTPUT_FILE_NAME": output_file_name,
+                
+                "SAVE_FACE_NAME": uploaded_name
+            }
+            response = requests.post("http://localhost:8001/update_db", json=args)
             result_str = response.json()["products"][0]["result"]
             if result_str == "Success":
                 st.write(f"{uploaded_name} 님의 얼굴을 저장 성공했습니다.")
+                rmtree(st.session_state.output_dir)
             else:
                 st.write("저장 실패했습니다. 다시 시도해주세요.")

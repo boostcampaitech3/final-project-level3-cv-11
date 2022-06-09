@@ -37,21 +37,31 @@ class FastAPIArgs(BaseModel):
     DEVICE: str = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     
     DO_DETECTION: bool = False
-    WHICH_DETECTOR: str = "MTCNN" # "YOLOv5"
+    WHICH_DETECTOR: str = "YOLOv5"
     COLOR_DETECTOR: str = "RGB"
     
     DO_RECOGNITION: bool = False
     WHICH_RECOGNIZER: str = "FaceNet"
     RECOG_THRESHOLD: float = 0.8
     
-    SAVE_FACE_EMBEDDING: bool = False
-    SAVE_FACE_NAME: str = "guest"
-    
     DO_TRACKING: bool = False
     WHICH_TRACKER: str = "DeepSort"
     
-    DEBUG_MODE: bool = False
+    USERNAME: str = "guest"
     
+    DEBUG_MODE: bool = False
+
+class RequestArgs(BaseModel):
+    USERNAME: str
+    REQUEST_ID: str
+    
+    DO_MOSAIC: bool = False
+    DO_STROKE: bool = False
+    
+    INPUT_FILE_NAME: str = "input.png"
+    OUTPUT_FILE_NAME: str = "output.png"
+    
+    SAVE_FACE_NAME: str = "guest"
 
 class DetectionResult(BaseModel):
     id: UUID = Field(default_factory=uuid4)
@@ -106,12 +116,33 @@ async def set_args(
     else:
         algo_tracking = assign_tracker(app.state.args["WHICH_TRACKER"], app.state.args["DEVICE"])
 
+        
+@app.post("/update_db", description="타겟을 임베딩으로 변환하여 저장합니다.")
+async def save_target(
+        json: RequestArgs
+        # files: List[UploadFile] = File(...)
+    ):
+    global model_detection, model_recognition
+    
+    args = json.dict()
+    for k in args:
+        app.state.args[k] = args[k]
+    
+    model_args = init_model_args(app.state.args, model_detection, model_recognition, None)
+    
+    products = []
 
-@app.post("/order", description="입력된 자료를 처리합니다.")
+@app.post("/order", description="타겟을 모자이크 처리합니다.")
 async def process_target(
-        files: List[UploadFile] = File(...)
+        json: RequestArgs
+        # files: List[UploadFile] = File(...)
     ):
     global model_detection, model_recognition, algo_tracking
+    
+    args = json.dict()
+    for k in args:
+        app.state.args[k] = args[k]
+    
     model_args = init_model_args(app.state.args, model_detection, model_recognition, algo_tracking)
     
     products = []

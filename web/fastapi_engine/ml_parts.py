@@ -1,30 +1,26 @@
 # from .util import CropRoiImg
 import torch
-
-from web.fastapi_engine.detection_pipeline import mtcnn_detection, retinaface_detection, yolo_detection
-
 from web.fastapi_engine.util import Get_normal_bbox
 
 from web.fastapi_engine.detection import get_embeddings, recognizer, deepsort_recognizer
+from web.fastapi_engine.detect_face import yolo_detection
 from web.fastapi_engine.util import xyxy2xywh
+from retinaface_utils.util import retinaface_detection
 
 
 # from retinaface_utils.util import retinaface_detection
 
 def Detection(img, args, model_args):
     '''
-    return bboxes position
+        return bboxes position
     '''
     device = model_args['Device']
 
-    if args["WHICH_DETECTOR"] == "MTCNN":
-        bboxes, probs = mtcnn_detection(model_args['Detection'], img, device)
-    elif args["WHICH_DETECTOR"] == "RetinaFace":
+    if args['WHICH_DETECTOR'] == 'retinaface':
         bboxes, probs = retinaface_detection(model_args['Detection'], img, device)
-    elif args["WHICH_DETECTOR"] == "YOLOv5":
+    else: # yolo
         bboxes, probs = yolo_detection(model_args['Detection'], img, device)
-    else:
-        raise NotImplementedError(args["WHICH_DETECTOR"])
+        # bboxes, probs = detect(model_args['Detection'], img, device)
 
     # 이미지 범위 외로 나간 bbox값 범위 처리
     if bboxes is not None:
@@ -36,7 +32,7 @@ def Detection(img, args, model_args):
     return bboxes, probs
 
 
-def Recognition(img, bboxes, args, model_args, id_name=None, identities=None, return_embeddings=False):
+def Recognition(img, bboxes, args, model_args, id_name=None, identities=None):
     '''
     return unknown face bboxes and ID: dictionary type, name: id's bbox
 
@@ -47,11 +43,8 @@ def Recognition(img, bboxes, args, model_args, id_name=None, identities=None, re
     device = model_args['Device']
 
     faces, unknown_embeddings = get_embeddings(model_args['Recognition'],
-                                                     img, bboxes, device)
-    if return_embeddings:
-        return unknown_embeddings
-    
-    if args['PROCESS_TARGET'] == 'img' or not args['DO_TRACKING']:
+                                                     img, bboxes, device)                  
+    if args['PROCESS_TARGET'] == 'Image' or not args['DO_TRACKING']:
         face_ids, result_probs = recognizer(model_args['Face_db'],
                                         unknown_embeddings,
                                         args['RECOG_THRESHOLD'])

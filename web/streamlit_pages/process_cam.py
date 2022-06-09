@@ -51,7 +51,10 @@ class VideoProcessor:
     def save_current_frame():
         global current_frame
         frame_ndarray = current_frame.to_ndarray(format="bgr24")
-        cv2.imwrite(".result_output/cam_current_frame.jpg", frame_ndarray)
+        
+        if not os.path.exists(st.session_state.output_dir):
+            os.mkdir(st.session_state.output_dir)
+        cv2.imwrite(st.session_state.output_dir + "input.jpg", frame_ndarray)
 
 
 def app():

@@ -3,8 +3,6 @@ import streamlit as st
 
 def app():
     # 예시 샘플 페이지
-    st.session_state.process_target = None
-    
     if "target_type" not in st.session_state:
         st.session_state.target_type = None
     elif st.session_state.target_type not in ("ex1", "ex2", "ex3", "ex4"):

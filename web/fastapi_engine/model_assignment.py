@@ -13,13 +13,14 @@ from face_detection.yolov5_face import load_yolov5
 from face_detection.faceboxes import FaceBoxes
 from face_detection.faceboxes.utils.load_util import load_model as load_faceboxes
 
-from deep_sort.deep_sort_face import DeepSortFace
-
 import cv2
 from cv2 import CascadeClassifier
 
 # ----- Recognition ----- #
 from face_recognition.facenet import InceptionResnetV1
+
+# ----- Tracking ----- #
+from face_tracking.deepsort.deep_sort_face import DeepSortFace
 
 
 def assign_detector(which_detector, device):
@@ -73,7 +74,7 @@ def assign_recognizer(which_recognizer, device):
 
 
 def assign_tracker(which_tracker, device):
-    assert which_tracker in ("DeepSort"), which_tracker
+    assert which_tracker in ("DeepSort", ), which_tracker
     
     if which_tracker == "DeepSort":
         algo = DeepSortFace(device=device)

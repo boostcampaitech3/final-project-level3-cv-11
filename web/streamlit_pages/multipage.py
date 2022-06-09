@@ -56,16 +56,21 @@ class MultiPage:
             )
             
             st.text(""); st.text("") # 공백
+            col1, col2 = st.columns(2)
+            st.session_state.do_mosaic = col1.checkbox("모자이크", value=True)
+            st.session_state.do_stroke = col2.checkbox("스트로크", value=False)
+            
+            st.text(""); st.text("") # 공백
             st.session_state.which_detector = st.selectbox(
                 "탐지 알고리즘 선택", 
-                ("MTCNN", "RetinaFace", "YOLOv5", "FaceBoxes", "HaarCascades"), 
+                ("MTCNN", "RetinaFace", "YOLOv5"), # "FaceBoxes", "HaarCascades"
                 index=2
             )
             
             st.text("") # 공백
             st.session_state.which_recognizer = st.selectbox(
                 "인식 알고리즘 선택", 
-                ("FaceNet", "ArcFace", "ArcFace_Mofy"), 
+                ("FaceNet", ), # "ArcFace", "ArcFace_Mofy"
                 index=0
             )
             
@@ -137,6 +142,8 @@ class MultiPage:
         if send_request:
             args = {
                 "PROCESS_TARGET": st.session_state.process_target,
+                
+                "USERNAME": st.session_state.username,
 
                 "DO_DETECTION": st.session_state.do_detection,
                 "WHICH_DETECTOR": st.session_state.which_detector,
