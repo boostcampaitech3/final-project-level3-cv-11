@@ -17,7 +17,7 @@ from retinaface_utils.data.config import cfg_mnet
 
 from detect_face import load_models
 
-from moviepy.editor import VideoFileClip, AudioFileClip
+from moviepy.editor import VideoFileClip
 
 
 def init(args):
@@ -54,7 +54,7 @@ def init(args):
     # Load Face DB
     db_path = "./database"
 
-    face_db = load_face_db("../data_/for_junha",
+    face_db = load_face_db("../data/test_images/",
                             db_path,
                             device, args, model_args)
 
@@ -98,8 +98,14 @@ def ProcessVideo(img, args, model_args, id_name):
     if len(outputs) > 0:
         bbox_xyxy = outputs[:, :4]
         identities = outputs[:, -1]
-        if identities[-1] not in id_name.keys(): # Update가 생기면
-            id_name, probs = ML.Recognition(img, bbox_xyxy, args, model_args, id_name, identities)                                       
+        if identities[-1] not in id_name.keys():
+            # Update가 생기거나
+            id_name, probs, face_embedding = ML.Recognition(img, bbox_xyxy, args, model_args, id_name, identities)
+            # faces_img, embedding_data = face_embedding.get_data()
+            # print('face image 데이터와 embedding 데이터!', faces_img.shape, embedding_data.shape)
+        elif all(['unknown' == i for i in id_name.values()]):
+            # 모든 대상이 unknown tag일 경우
+            id_name, probs, face_embedding = ML.Recognition(img, bbox_xyxy, args, model_args, id_name, identities, reset=True)
 
         processed_img = Mosaic(img, bbox_xyxy, identities, 10, id_name)
     
@@ -127,7 +133,7 @@ def main(args):
 
     # =================== Video =======================
     elif args['PROCESS_TARGET'] == 'Video':
-        video_path = '../data_/dest_images/mudo.mp4'
+        video_path = args['VIDEO_DIR']
         if args['SOUND']:
             clip = VideoFileClip(video_path)
             audio_data = clip.audio
@@ -163,8 +169,8 @@ def main(args):
             output = video.set_audio(audio_data)
             output.write_videofile(args['SAVE_DIR'] + '/output_sound.mp4')
 
-        print(f'original video fps: {fps}')
         print(f'time: {time() - start}')
+        print(f'original video fps: {fps}')
         print('done.')
     # ====================== Video ===========================
 

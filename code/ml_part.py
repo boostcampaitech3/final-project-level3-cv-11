@@ -28,7 +28,20 @@ def Detection(img, args, model_args):
     return bboxes, probs
 
 
-def Recognition(img, bboxes, args, model_args, id_name=None, identities=None):
+class Faces_embeddings():
+    def __init__(self) -> None:
+        self.faces = []
+        self.unknown_embeddings = []
+    
+    def set_data(self, faces, embeddings):
+        self.faces = faces
+        self.unknown_embeddings = embeddings
+
+    def get_data(self):
+        return self.faces, self.unknown_embeddings
+
+
+def Recognition(img, bboxes, args, model_args, id_name=None, identities=None, reset=False):
     '''
     return unknown face bboxes and ID: dictionary type, name: id's bbox
 
@@ -37,24 +50,38 @@ def Recognition(img, bboxes, args, model_args, id_name=None, identities=None):
     dectection된 얼굴과 특정 대상 얼굴과 비교.
     '''
     device = model_args['Device']
+    faces_embeddings = Faces_embeddings()
 
-    faces, unknown_embeddings = get_embeddings(model_args['Recognition'],
-                                                     img, bboxes, device)                  
     if args['PROCESS_TARGET'] == 'Image' or not args['TRACKING']:
+        faces, unknown_embeddings = get_embeddings(model_args['Recognition'],
+                                                    img, bboxes, device)
         face_ids, result_probs = recognizer(model_args['Face_db'],
-                                        unknown_embeddings,
-                                        args['RECOG_THRESHOLD'])
-    else: 
+                                            unknown_embeddings,
+                                            args['RECOG_THRESHOLD'])
+    else:
+        if reset:
+            unknown_bboxes = bboxes
+            unknown_identities = identities
+        else:
+            unknown_identities = [i for i in identities if i not in id_name.keys()]
+            unknown_bboxes = [v for i, v in zip(identities, bboxes) if i not in id_name.keys()]
+            
+        faces, unknown_embeddings = get_embeddings(model_args['Recognition'],
+                                                    img, unknown_bboxes, device)
+
         face_ids, result_probs = deepsort_recognizer(model_args['Face_db'],
                                                     unknown_embeddings,
                                                     args['RECOG_THRESHOLD'],
                                                     id_name, 
-                                                    identities)
+                                                    unknown_identities)
+
+    faces_embeddings.set_data(faces, unknown_embeddings)
+
     if args['DEBUG_MODE']:
         print(face_ids)
         print(result_probs)
 
-    return face_ids, result_probs
+    return face_ids, result_probs, faces_embeddings
 
 
 def Deepsort(img, bboxes, probs, deepsort):

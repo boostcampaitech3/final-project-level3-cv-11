@@ -5,6 +5,7 @@ class Args(object):
     parser = argparse.ArgumentParser(description='Arguments for Unknown mosaic')
     parser.add_argument('--process_target', type=str, default='Video', help='Image, Video, Cam')
     parser.add_argument('--image_dir', default="../data_/dest_images/wls.jpg", help='Directory to image')
+    parser.add_argument('--video_dir', default="../data_/dest_images/kakao/song.mp4", help='Directory to video')
     parser.add_argument('--bbox_thrs', type=int, default=30, help='Threshold of bounding box')
     parser.add_argument('--recog_thrs', type=float, default=0.8, help='Threshold of recognition')
     parser.add_argument('--detector', type=str, default='retinaface', help='Detection model: mtcnn, retinaface')
@@ -23,6 +24,7 @@ class Args(object):
     params = {
         "PROCESS_TARGET": parse.process_target,
         "IMAGE_DIR": parse.image_dir, 
+        "VIDEO_DIR": parse.video_dir,
         "BBOX_THRESHOLD": parse.bbox_thrs, 
         "RECOG_THRESHOLD": parse.recog_thrs,
         "DETECTOR": parse.detector,
