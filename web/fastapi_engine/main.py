@@ -15,9 +15,9 @@ import torchvision
 
 from configs.process import params as init_params
 from web.fastapi_engine.model_assignment import assign_detector, assign_recognizer, assign_tracker
-from web.fastapi_engine.model_pipeline import init_model_args, ProcessImage, ProcessVideo
+from web.fastapi_engine.model_pipeline import init_model_args, SaveSingleEmbedding, ProcessImage, ProcessVideo
 
-from moviepy.editor import VideoFileClip, AudioFileClip
+from moviepy.editor import VideoFileClip
 
 app = FastAPI()
 app.state.args = dict()
@@ -98,7 +98,7 @@ async def set_args(
         elif app.state.args["WHICH_DETECTOR"] == "RetinaFace":
             app.state.args["COLOR_DETECTOR"] = "BGR"
         elif app.state.args["WHICH_DETECTOR"] == "YOLOv5":
-            app.state.args["COLOR_DETECTOR"] = "RGB"
+            app.state.args["COLOR_DETECTOR"] = "BGR"
         elif app.state.args["WHICH_DETECTOR"] == "FaceBoxes":
             app.state.args["COLOR_DETECTOR"] = "RGB"
         elif app.state.args["WHICH_DETECTOR"] == "HaarCascades":
@@ -131,6 +131,25 @@ async def save_target(
     model_args = init_model_args(app.state.args, model_detection, model_recognition, None)
     
     products = []
+    
+    if app.state.args["PROCESS_TARGET"] == "img":
+        # Color channel: BGR
+        img = cv2.imread(app.state.args["INPUT_FILE_NAME"])
+        
+        start = time()
+        SaveSingleEmbedding(img, app.state.args, model_args)
+        
+        print(f'time: {time() - start}')
+        print('done.')
+        
+        product = DetectionResult(result="Success")
+        products.append(product)
+    
+    else:
+        raise ValueError(app.state.args["PROCESS_TARGET"])
+    
+    all_result = ResultList(products=products)
+    return all_result
 
 @app.post("/order", description="타겟을 모자이크 처리합니다.")
 async def process_target(
@@ -146,26 +165,30 @@ async def process_target(
     model_args = init_model_args(app.state.args, model_detection, model_recognition, algo_tracking)
     
     products = []
-    file = files[0]
     
     # =================== Image =======================
     if app.state.args["PROCESS_TARGET"] == "img":
-        image_bytes = await file.read()
+        # Color channel: BGR
+        img = cv2.imread(app.state.args["INPUT_FILE_NAME"])
         
-        encoded_img = np.fromstring(image_bytes, dtype=np.uint8)
-        if app.state.args["COLOR_DETECTOR"] == "RGB":
-            image_array = cv2.imdecode(encoded_img, cv2.IMREAD_COLOR)
-            image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
-        elif app.state.args["COLOR_DETECTOR"] == "BGR":
-            image_array = cv2.imdecode(encoded_img, cv2.IMREAD_COLOR)
-        elif app.state.args["COLOR_DETECTOR"] == "GRAY":
-            image_array = cv2.imdecode(encoded_img, cv2.IMREAD_GRAYSCALE)
-        else:
-            raise ValueError(app.state.args["COLOR_DETECTOR"])
+        start = time()
         
-        processed_img = ProcessImage(image_array, app.state.args, model_args)
+        # if app.state.args["COLOR_DETECTOR"] == "RGB":
+        #     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # elif app.state.args["COLOR_DETECTOR"] == "BGR":
+        #     pass
+        # elif app.state.args["COLOR_DETECTOR"] == "GRAY":
+        #     img = cv2.imdecode(img, cv2.COLOR_BGR2GRAY)
+        # else:
+        #     raise ValueError(app.state.args["COLOR_DETECTOR"])
         
-        cv2.imwrite(".result_output/output.png", processed_img)
+        
+        img = ProcessImage(img, app.state.args, model_args)
+        
+        cv2.imwrite(app.state.args["OUTPUT_FILE_NAME"], img)
+        
+        print(f'time: {time() - start}')
+        print('done.')
         
         product = DetectionResult(result="Success")
         products.append(product)
@@ -173,22 +196,17 @@ async def process_target(
     
     # =================== Video =======================
     elif app.state.args["PROCESS_TARGET"] == "vid":
-        video_bytes = await file.read()
-        video_path = ".result_output/input_video.mp4"
-        with open(video_path, "wb") as fp:
-            fp.write(video_bytes)
-        # sound
-        clip = VideoFileClip(video_path)
+        clip = VideoFileClip(app.state.args["INPUT_FILE_NAME"])
         audio_data = clip.audio
 
-        cap = cv2.VideoCapture(video_path)
-        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        cap = cv2.VideoCapture(app.state.args["INPUT_FILE_NAME"])
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
         width = int(cap.get(3))
         height = int(cap.get(4))
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
         fps = cap.get(cv2.CAP_PROP_FPS)
-        out = cv2.VideoWriter('.result_output/out_video.mp4', fourcc, fps, (width, height))
+        out = cv2.VideoWriter(app.state.args["OUTPUT_FILE_NAME"], fourcc, fps, (width, height))
         # frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
         id_name = {}
@@ -197,7 +215,16 @@ async def process_target(
             ret, img = cap.read()
             # Color channel: BGR
             if ret:
-                if app.state.args['DO_TRACKING']:
+                if app.state.args["DO_TRACKING"]:
+                    # if app.state.args["COLOR_DETECTOR"] == "RGB":
+                    #     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                    # elif app.state.args["COLOR_DETECTOR"] == "BGR":
+                    #     pass
+                    # elif app.state.args["COLOR_DETECTOR"] == "GRAY":
+                    #     img = cv2.imdecode(img, cv2.COLOR_BGR2GRAY)
+                    # else:
+                    #     raise ValueError(app.state.args["COLOR_DETECTOR"])
+                    
                     img, id_name = ProcessVideo(img, app.state.args, model_args, id_name)
                 else:
                     img = ProcessImage(img, app.state.args, model_args)
@@ -207,22 +234,21 @@ async def process_target(
 
         cap.release()
         out.release()
-
-        # sound
-        video = VideoFileClip('.result_output/out_video.mp4')
+        
+        video = VideoFileClip(app.state.args["OUTPUT_FILE_NAME"])
         output = video.set_audio(audio_data)
-        output.write_videofile('.result_output/output_video.mp4')
+        output.write_videofile(app.state.args["OUTPUT_FILE_NAME"])
 
-        print(f'original video fps: {fps}')
         print(f'time: {time() - start}')
+        print(f'original video fps: {fps}')
         print('done.')
 
         product = DetectionResult(result="Success")
         products.append(product)
     # =================== Video =======================
     
-    elif app.state.args["PROCESS_TARGET"] == "cam":
-        pass
+    else:
+        raise NotImplementedError(app.state.args["PROCESS_TARGET"])
     
     all_result = ResultList(products=products)
     return all_result

@@ -26,6 +26,9 @@ class MultiPage:
             "save_face_embedding": False,
             "which_tracker": "DeepSort",
             
+            "do_mosaic": True,
+            "do_stroke": False,
+            
             "debug_mode": False
         }
         st.session_state.process_target = None
@@ -63,8 +66,8 @@ class MultiPage:
             st.text(""); st.text("") # 공백
             st.session_state.which_detector = st.selectbox(
                 "탐지 알고리즘 선택", 
-                ("MTCNN", "RetinaFace", "YOLOv5"), # "FaceBoxes", "HaarCascades"
-                index=2
+                ("RetinaFace", "YOLOv5"), # "MTCNN", "FaceBoxes", "HaarCascades"
+                index=1
             )
             
             st.text("") # 공백
@@ -135,6 +138,12 @@ class MultiPage:
         
         if self.prev_state["which_tracker"] != st.session_state.which_tracker:
             self.prev_state["which_tracker"] = st.session_state.which_tracker; send_request = True
+        
+        if self.prev_state["do_mosaic"] != st.session_state.do_mosaic:
+            self.prev_state["do_mosaic"] = st.session_state.do_mosaic
+        
+        if self.prev_state["do_stroke"] != st.session_state.do_stroke:
+            self.prev_state["do_stroke"] = st.session_state.do_stroke
         
         if self.prev_state["debug_mode"] != st.session_state.debug_mode:
             self.prev_state["debug_mode"] = st.session_state.debug_mode

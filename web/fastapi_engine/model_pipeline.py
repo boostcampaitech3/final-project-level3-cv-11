@@ -1,3 +1,6 @@
+import os
+import pickle
+
 from web.fastapi_engine.database import load_face_db
 from web.fastapi_engine import ml_part as ML
 from web.fastapi_engine.util import Mosaic, DrawRectImg
@@ -20,18 +23,38 @@ def init_model_args(args, model_detection=None, model_recognition=None, algo_tra
             model_args["Recognition"] = model_recognition
             
             # Load Face DB
-            face_db_path = f".database/{args['USERNAME']}/"
-            face_db = load_face_db(".assets/sample_input/test_images2",
-                                     face_db_path, 
-                                     device, args, model_args)
-
-            model_args['Face_db'] = face_db
+            model_args['Face_db_path'] = f".database/{args['USERNAME']}/{args['WHICH_DETECTOR']}"
+            model_args['Face_db'] = load_face_db(model_args['Face_db_path'])
             
             if args["DO_TRACKING"]:
                 # 3. Load Tracking Algorithm
                 model_args["Tracking"] = algo_tracking
     
     return model_args
+
+
+def SaveSingleEmbedding(img, args, model_args):
+    process_target = args['PROCESS_TARGET']
+
+    # Object Detection
+    bboxes, probs = ML.Detection(img, args, model_args)
+    if bboxes is None: return img
+
+    # Object Recognition
+    _, _, face_embeddings = ML.Recognition(img, bboxes, args, model_args)
+    
+    faces_img, embedding_data = face_embeddings.get_data()
+    
+    embedding_data = embedding_data[0].numpy() # save only first embedding
+    if args["SAVE_FACE_NAME"] in model_args['Face_db']:
+        model_args['Face_db'][args["SAVE_FACE_NAME"]].append(embedding_data)
+    else:
+        model_args['Face_db'][args["SAVE_FACE_NAME"]] = [embedding_data]
+
+    with open(os.path.join(model_args['Face_db_path'], "face_db"), "wb") as f:
+        pickle.dump(model_args['Face_db'], f)
+
+    return 
 
 
 def ProcessImage(img, args, model_args):
@@ -42,7 +65,7 @@ def ProcessImage(img, args, model_args):
     if bboxes is None: return img
 
     # Object Recognition
-    face_ids, probs = ML.Recognition(img, bboxes, args, model_args)
+    face_ids, probs, _ = ML.Recognition(img, bboxes, args, model_args)
 
     # Mosaic
     processed_img = Mosaic(img, bboxes, face_ids, n=10)
@@ -69,13 +92,19 @@ def ProcessVideo(img, args, model_args, id_name):
     if len(outputs) > 0:
         bbox_xyxy = outputs[:, :4]
         identities = outputs[:, -1]
-        if identities[-1] not in id_name.keys(): # Update가 생기면
-            id_name, probs = ML.Recognition(img, bbox_xyxy, args, model_args, id_name, identities)                                       
+        if identities[-1] not in id_name.keys():
+            # Update가 생기거나
+            id_name, probs, face_embedding = ML.Recognition(img, bbox_xyxy, args, model_args, id_name, identities)
+            # faces_img, embedding_data = face_embedding.get_data()
+            # print('face image 데이터와 embedding 데이터!', faces_img.shape, embedding_data.shape)
+        elif all(['unknown' == i for i in id_name.values()]):
+            # 모든 대상이 unknown tag일 경우
+            id_name, probs, face_embedding = ML.Recognition(img, bbox_xyxy, args, model_args, id_name, identities, reset=True)
 
         processed_img = Mosaic(img, bbox_xyxy, identities, 10, id_name)
     
         # 특정인에 bbox와 name을 보여주고 싶으면
-        processed_img = DrawRectImg(processed_img, bbox_xyxy, identities, id_name)
+        # processed_img = DrawRectImg(processed_img, bbox_xyxy, identities, id_name)
     else:
         processed_img = img
     

@@ -55,14 +55,17 @@ if not st.session_state.authenticated:
         st.success('You are authenticated!')
         st.session_state.authenticated = True
         
-        st.text("3초 후 페이지가 새로고침 됩니다.")
+        # st.text("3초 후 페이지가 새로고침 됩니다.")
         
-        sleep(3)
-        with open("web/streamlit_utils/reload.py", 'w') as dummy_script:
-            # 코드 변경 시 streamlit은 자동으로 재실행
-            #   - TODO: 다른 사람이 로그인해서 코드 변경 시 페이지가 재실행 되는 상황이 발생할 수도?
-            dummy_script.write(f"access_datetime = '{datetime.now().strftime('%y%m%d %H%M%S')}'")
-        importlib.reload(web.streamlit_utils.reload)
+        # sleep(3)
+        # with open("web/streamlit_utils/reload.py", 'w') as dummy_script:
+        #     # 코드 변경 시 streamlit은 자동으로 재실행
+        #     #   - TODO: 다른 사람이 로그인해서 코드 변경 시 페이지가 재실행 되는 상황이 발생할 수도?
+        #     dummy_script.write(f"access_datetime = '{datetime.now().strftime('%y%m%d %H%M%S')}'")
+        # try:
+        #     importlib.reload(web.streamlit_utils.reload)
+        # except:
+        #     pass
         st.button("바로 접속") # 이상하게 3초 후에 무작위로 새로고침이 안되는 현상이 있음. 빈 버튼과 상호작용 시 새로고침 됨.
         
     else:

@@ -1,28 +1,26 @@
-# from .util import CropRoiImg
 import torch
 
 from web.fastapi_engine.detection_pipeline import mtcnn_detection, retinaface_detection, yolo_detection
 
-from web.fastapi_engine.util import Get_normal_bbox
+from web.fastapi_engine.recognition_pipeline import mtcnn_get_embeddings, get_embeddings
+from web.fastapi_engine.recognition_pipeline import recognizer, deepsort_recognizer
 
-from web.fastapi_engine.detection import get_embeddings, recognizer, deepsort_recognizer
+from web.fastapi_engine.util import Get_normal_bbox
 from web.fastapi_engine.util import xyxy2xywh
 
-
-# from retinaface_utils.util import retinaface_detection
 
 def Detection(img, args, model_args):
     '''
     return bboxes position
     '''
     device = model_args['Device']
-
-    if args["WHICH_DETECTOR"] == "MTCNN":
-        bboxes, probs = mtcnn_detection(model_args['Detection'], img, device)
-    elif args["WHICH_DETECTOR"] == "RetinaFace":
+    
+    if args["WHICH_DETECTOR"] == "RetinaFace":
         bboxes, probs = retinaface_detection(model_args['Detection'], img, device)
     elif args["WHICH_DETECTOR"] == "YOLOv5":
         bboxes, probs = yolo_detection(model_args['Detection'], img, device)
+    # elif args["WHICH_DETECTOR"] == "MTCNN":
+    #     bboxes, probs = mtcnn_detection(model_args['Detection'], img, device)
     else:
         raise NotImplementedError(args["WHICH_DETECTOR"])
 
@@ -36,7 +34,20 @@ def Detection(img, args, model_args):
     return bboxes, probs
 
 
-def Recognition(img, bboxes, args, model_args, id_name=None, identities=None, return_embeddings=False):
+class Faces_embeddings():
+    def __init__(self) -> None:
+        self.faces = []
+        self.unknown_embeddings = []
+    
+    def set_data(self, faces, embeddings):
+        self.faces = faces
+        self.unknown_embeddings = embeddings
+
+    def get_data(self):
+        return self.faces, self.unknown_embeddings
+
+
+def Recognition(img, bboxes, args, model_args, id_name=None, identities=None, reset=False):
     '''
     return unknown face bboxes and ID: dictionary type, name: id's bbox
 
@@ -45,27 +56,49 @@ def Recognition(img, bboxes, args, model_args, id_name=None, identities=None, re
     dectection된 얼굴과 특정 대상 얼굴과 비교.
     '''
     device = model_args['Device']
+    faces_embeddings = Faces_embeddings()
 
-    faces, unknown_embeddings = get_embeddings(model_args['Recognition'],
-                                                     img, bboxes, device)
-    if return_embeddings:
-        return unknown_embeddings
-    
     if args['PROCESS_TARGET'] == 'img' or not args['DO_TRACKING']:
+        faces, unknown_embeddings = get_embeddings(model_args['Recognition'], img, bboxes, device)
+        # if args["WHICH_DETECTOR"] == "MTCNN":
+        #     faces, unknown_embeddings = mtcnn_get_embeddings(model_args['Detection'], model_args['Recognition'], img, bboxes, device)
+        # elif args["WHICH_DETECTOR"] in ("RetinaFace", "YOLOv5"):
+        #     faces, unknown_embeddings = get_embeddings(model_args['Recognition'], img, bboxes, device)
+        # else:
+        #     raise NotImplementedError(args["WHICH_DETECTOR"])
+        
         face_ids, result_probs = recognizer(model_args['Face_db'],
-                                        unknown_embeddings,
-                                        args['RECOG_THRESHOLD'])
-    else: 
+                                            unknown_embeddings,
+                                            args['RECOG_THRESHOLD'])
+    else:
+        if reset:
+            unknown_bboxes = bboxes
+            unknown_identities = identities
+        else:
+            unknown_identities = [i for i in identities if i not in id_name.keys()]
+            unknown_bboxes = [v for i, v in zip(identities, bboxes) if i not in id_name.keys()]
+        
+        faces, unknown_embeddings = get_embeddings(model_args['Recognition'], img, unknown_bboxes, device)
+        # if args["WHICH_DETECTOR"] == "MTCNN":
+        #     faces, unknown_embeddings = mtcnn_get_embeddings(model_args['Detection'], model_args['Recognition'], img, unknown_bboxes, device)
+        # elif args["WHICH_DETECTOR"] in ("RetinaFace", "YOLOv5"):
+        #     faces, unknown_embeddings = get_embeddings(model_args['Recognition'], img, unknown_bboxes, device)
+        # else:
+        #     raise NotImplementedError(args["WHICH_DETECTOR"])
+
         face_ids, result_probs = deepsort_recognizer(model_args['Face_db'],
                                                     unknown_embeddings,
                                                     args['RECOG_THRESHOLD'],
                                                     id_name, 
-                                                    identities)
+                                                    unknown_identities)
+
+    faces_embeddings.set_data(faces, unknown_embeddings)
+
     if args['DEBUG_MODE']:
         print(face_ids)
         print(result_probs)
 
-    return face_ids, result_probs
+    return face_ids, result_probs, faces_embeddings
 
 
 def Deepsort(img, bboxes, probs, deepsort):

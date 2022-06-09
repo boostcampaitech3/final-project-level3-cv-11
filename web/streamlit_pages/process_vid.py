@@ -1,5 +1,6 @@
 import datetime
 import hashlib
+import os
 import requests
 from shutil import rmtree
 import streamlit as st
@@ -33,9 +34,7 @@ def app():
             "REQUEST_ID": shastr,
 
             "INPUT_FILE_NAME": input_file_name,
-            "OUTPUT_FILE_NAME": output_file_name,
-
-            "SAVE_FACE_NAME": uploaded_name
+            "OUTPUT_FILE_NAME": output_file_name
         }
         response = requests.post("http://localhost:8001/order", json=args)
         result_str = response.json()["products"][0]["result"]

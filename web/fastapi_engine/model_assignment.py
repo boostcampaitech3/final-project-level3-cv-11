@@ -32,6 +32,7 @@ def assign_detector(which_detector, device):
             thresholds = [0.6, 0.7, 0.7], factor=0.709, post_process=True, 
             device=device, keep_all=True
         ).eval()
+        raise NotImplementedError(which_detector)
     elif which_detector == "RetinaFace":
         model_path = ".assets/model_weights/detector/retinaface/mobilenet0.25_Final.pth"
         backbone_path = ".assets/model_weights/detector/retinaface/mobilenetV1X0.25_pretrain.tar"
@@ -40,7 +41,7 @@ def assign_detector(which_detector, device):
         model.to(device)
         model.eval()
     elif which_detector == "YOLOv5":
-        model_path = ".assets/model_weights/detector/yolov5_face/yolov5n-face.pt"
+        model_path = ".assets/model_weights/detector/yolov5_face/yolov5-blazeface.pt"
         model = load_yolov5(model_path, device)
         model.to(device)
         model.eval()
@@ -53,9 +54,11 @@ def assign_detector(which_detector, device):
         cudnn.benchmark = True
         device = "cpu" # torch.device("cpu" if args.cpu else "cuda")
         model = model.to(device)
+        raise NotImplementedError(which_detector)
     else: # if which_detector == "HaarCascades":
         xml_path = ".assets/model_weights/detector/haarcascades/haarcascade_frontalface_default.xml"
         model = CascadeClassifier(cv2.samples.findFile(xml_path))
+        raise NotImplementedError(which_detector)
     
     return model
 
@@ -67,8 +70,10 @@ def assign_recognizer(which_recognizer, device):
         model = InceptionResnetV1(pretrained='vggface2').eval().to(device)
     elif which_recognizer == "ArcFace":
         model = None
+        raise NotImplementedError(which_recognizer)
     else: # if which_recognizer == "ArcFace_Mofy":
         model = None
+        raise NotImplementedError(which_recognizer)
     
     return model
 
@@ -80,5 +85,6 @@ def assign_tracker(which_tracker, device):
         algo = DeepSortFace(device=device)
     else:
         algo = None
+        raise NotImplementedError(which_tracker)
     
     return algo

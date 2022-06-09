@@ -71,7 +71,6 @@ def app():
                 with open(st.session_state.output_dir + f"input.{uploaded_file_type}", "wb") as picfile:
                     picfile.write(uploaded_file.getvalue())
                 input_file_name = st.session_state.output_dir + f"input.{uploaded_file_type}"
-                output_file_name = st.session_state.output_dir + f"output.{uploaded_file_type}"
             
         else: # if st.session_state.target_type == "WEBCAM":
             webrtc_streamer(
@@ -81,9 +80,8 @@ def app():
             )
             if st.button("캡쳐!", on_click=VideoProcessor.save_current_frame):
                 input_file_name = st.session_state.output_dir + "input.jpg"
-                output_file_name = st.session_state.output_dir + "output.jpg"
         
-        if os.path.exists(st.session_state.output_dir):
+        if os.path.exists(input_file_name):
             st.text(""); st.text("") # 공백
             st.markdown("###### 데이터 처리 결과")
             
@@ -92,7 +90,6 @@ def app():
                 "REQUEST_ID": shastr,
 
                 "INPUT_FILE_NAME": input_file_name,
-                "OUTPUT_FILE_NAME": output_file_name,
                 
                 "SAVE_FACE_NAME": uploaded_name
             }
