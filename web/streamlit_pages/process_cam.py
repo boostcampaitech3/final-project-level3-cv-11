@@ -1,18 +1,16 @@
 import av
 import cv2
-import numpy as np
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer
 import torch
 
 from configs.server import rtc_configuration
-from web.fastapi_engine.model_pipeline import init_model_args
-from web.fastapi_engine.detection import load_face_db
-from web.fastapi_engine import ml_part as ML
-from web.fastapi_engine.util import Mosaic, DrawRectImg
-from web.fastapi_engine.model_assignment import assign_detector, assign_recognizer
+from web.fastapi_engine.model_pipeline import init_model_args, ProcessImage, ProcessVideo
+from web.fastapi_engine.database import load_face_db
+from web.fastapi_engine.model_assignment import assign_detector, assign_recognizer, assign_tracker
 
 current_frame = None
+id_name = {}
 
 class VideoProcessor:
     def __init__(self):
@@ -24,66 +22,36 @@ class VideoProcessor:
         self.args["BBOX_THRESHOLD"] = 30
         self.args["RECOG_THRESHOLD"] = 0.8
         self.args["DO_DETECTION"] = True
-        self.args["WHICH_DETECTOR"] = "MTCNN"
+        self.args["WHICH_DETECTOR"] = "YOLOv5"
         self.args["DO_RECOGNITION"] = True
         self.args["WHICH_RECOGNIZER"] = "FaceNet"
-        self.args["DO_TRACKING"] = False
+        self.args["DO_TRACKING"] = True
+        self.args["WHICH_TRACKER"] = "DeepSort"
         
         self.model_args = dict()
         self.model_args["Device"] = self.device
-        self.model_args["Detection"] = assign_detector("MTCNN", self.device)
-        self.model_args["Recognition"] = assign_recognizer("FaceNet", self.device)
-        face_db_path = ".database/face_db"
-        self.model_args['Face_db'] = load_face_db(".assets/sample_input/test_images", face_db_path, ".database/img_db", self.device, self.args, self.model_args)
+        self.model_args["Detection"] = assign_detector(self.args["WHICH_DETECTOR"], self.device)
+        self.model_args["Recognition"] = assign_recognizer(self.args["WHICH_RECOGNIZER"], self.device)
+        self.model_args['Tracking'] = assign_tracker(self.args["WHICH_TRACKER"], self.device)
+        face_db_path = ".database/"
+        self.model_args['Face_db'] = load_face_db(".assets/sample_input/test_images2", face_db_path, self.device, self.args, self.model_args)
 
     def recv(self, frame):
         # The frame is an instance of av.VideoFrame (or av.AudioFrame when dealing with audio) of PyAV library.
         #   - https://pyav.org/docs/develop/api/video.html#av.video.frame.VideoFrame
-        global current_frame
+        global current_frame, id_name
         current_frame = frame
-            
-        ndarray_img = frame.to_ndarray(format="rgb24")
-        processed_frame = self.ProcessImage(ndarray_img, self.args, self.model_args)
+
+        ndarray_img = frame.to_ndarray(format="bgr24")
+        # processed_frame = ProcessImage(ndarray_img, self.args, self.model_args)
+        processed_frame, id_name = ProcessVideo(ndarray_img, self.args, self.model_args, id_name)
         
-        return av.VideoFrame.from_ndarray(processed_frame, format="rgb24")
+        return av.VideoFrame.from_ndarray(processed_frame, format="bgr24")
 
     def save_current_frame():
         global current_frame
         frame_ndarray = current_frame.to_ndarray(format="bgr24")
         cv2.imwrite(".result_output/cam_current_frame.jpg", frame_ndarray)
-    
-    def ProcessImage(self, img, args, model_args):
-        process_target = args["PROCESS_TARGET"]
-
-        # Object Detection
-        bboxes = ML.Detection(img, args, model_args)
-        print(f"{len(bboxes)}개 얼굴 찾음!")
-        if bboxes is None:
-            # if args["WHICH_DETECTOR"] == "MTCNN":
-            #     if process_target == "vid": # torchvision
-            #         img = img.numpy()
-            #     # Color channel: RGB -> BGR
-            #     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-            return img
-
-        # Object Recognition
-        face_ids = ML.Recognition(img, bboxes, args, model_args)
-        # face_ids = [ 'unknown' for _ in bboxes ]
-
-        # if args["WHICH_DETECTOR"] == "MTCNN":
-        #     # 모자이크 전처리
-        #     if process_target == "vid": # torchvision
-        #         img = img.numpy()
-        #     # Color channel: RGB -> BGR
-        #     img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-
-        # Mosaic
-        img = Mosaic(img, bboxes, face_ids, n=10)
-
-        # 특정인에 bbox와 name을 보여주고 싶으면
-        processed_img = DrawRectImg(img, bboxes, face_ids)
-
-        return processed_img
 
 
 def app():

@@ -1,7 +1,4 @@
-import cv2
-import torch
-
-from web.fastapi_engine.detection import load_face_db
+from web.fastapi_engine.database import load_face_db
 from web.fastapi_engine import ml_part as ML
 from web.fastapi_engine.util import Mosaic, DrawRectImg
 
@@ -23,11 +20,10 @@ def init_model_args(args, model_detection=None, model_recognition=None, algo_tra
             model_args["Recognition"] = model_recognition
             
             # Load Face DB
-            face_db_path = ".database/face_db"
-            if args["WHICH_DETECTOR"] == "RetinaFace":
-                face_db_path += "_BGR"
-
-            face_db = load_face_db(".assets/sample_input/test_images", face_db_path, ".database/img_db", device, args, model_args)
+            face_db_path = ".database/"
+            face_db = load_face_db(".assets/sample_input/test_images2",
+                                     face_db_path, 
+                                     device, args, model_args)
 
             model_args['Face_db'] = face_db
             
@@ -39,33 +35,48 @@ def init_model_args(args, model_detection=None, model_recognition=None, algo_tra
 
 
 def ProcessImage(img, args, model_args):
-    process_target = args["PROCESS_TARGET"]
+    process_target = args['PROCESS_TARGET']
 
     # Object Detection
-    bboxes = ML.Detection(img, args, model_args)
-    # print(f"{len(bboxes)}개 얼굴 찾음!")
-    if bboxes is None:
-        if args["WHICH_DETECTOR"] == "MTCNN":
-            if process_target == "vid": # torchvision
-                img = img.numpy()
-            # Color channel: RGB -> BGR
-            img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        return img
+    bboxes, probs = ML.Detection(img, args, model_args)
+    if bboxes is None: return img
 
     # Object Recognition
-    face_ids = ML.Recognition(img, bboxes, args, model_args)
+    face_ids, probs = ML.Recognition(img, bboxes, args, model_args)
 
-    if args["WHICH_DETECTOR"] == "MTCNN":
-        # 모자이크 전처리
-        if process_target == "vid": # torchvision
-            img = img.numpy()
-        # Color channel: RGB -> BGR
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-    
     # Mosaic
-    img = Mosaic(img, bboxes, face_ids, n=10)
+    processed_img = Mosaic(img, bboxes, face_ids, n=10)
 
     # 특정인에 bbox와 name을 보여주고 싶으면
-    processed_img = DrawRectImg(img, bboxes, face_ids)
+    processed_img = DrawRectImg(processed_img, bboxes, face_ids)
 
     return processed_img
+
+
+def ProcessVideo(img, args, model_args, id_name):
+    # global id_name
+    # Object Detection
+    bboxes, probs = ML.Detection(img, args, model_args)
+    
+    # ML.DeepsortRecognition
+    
+    outputs = ML.Deepsort(img, bboxes, probs, model_args['Tracking'])
+    # last_out = outputs 
+
+    # if boxes is None:
+    #     return img, outputs
+    
+    if len(outputs) > 0:
+        bbox_xyxy = outputs[:, :4]
+        identities = outputs[:, -1]
+        if identities[-1] not in id_name.keys(): # Update가 생기면
+            id_name, probs = ML.Recognition(img, bbox_xyxy, args, model_args, id_name, identities)                                       
+
+        processed_img = Mosaic(img, bbox_xyxy, identities, 10, id_name)
+    
+        # 특정인에 bbox와 name을 보여주고 싶으면
+        processed_img = DrawRectImg(processed_img, bbox_xyxy, identities, id_name)
+    else:
+        processed_img = img
+    
+    return processed_img, id_name

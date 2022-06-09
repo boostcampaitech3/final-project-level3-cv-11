@@ -1,12 +1,12 @@
 import cv2
+import torch
+
+from time import time
 from datetime import datetime
-import io
 import numpy as np
-from PIL import Image
 from typing import List, Union, Optional, Dict, Any
 
 from fastapi import FastAPI, UploadFile, File
-from fastapi.param_functions import Depends
 from pydantic import BaseModel, Field
 from uuid import UUID, uuid4
 
@@ -15,8 +15,9 @@ import torchvision
 
 from configs.process import params as init_params
 from web.fastapi_engine.model_assignment import assign_detector, assign_recognizer, assign_tracker
-from web.fastapi_engine.model_pipeline import init_model_args, ProcessImage
+from web.fastapi_engine.model_pipeline import init_model_args, ProcessImage, ProcessVideo
 
+from moviepy.editor import VideoFileClip, AudioFileClip
 
 app = FastAPI()
 app.state.args = dict()
@@ -41,6 +42,7 @@ class FastAPIArgs(BaseModel):
     
     DO_RECOGNITION: bool = False
     WHICH_RECOGNIZER: str = "FaceNet"
+    RECOG_THRESHOLD: float = 0.8
     
     SAVE_FACE_EMBEDDING: bool = False
     SAVE_FACE_NAME: str = "guest"
@@ -141,25 +143,49 @@ async def process_target(
     # =================== Video =======================
     elif app.state.args["PROCESS_TARGET"] == "vid":
         video_bytes = await file.read()
-        
-        with open(".result_output/input_video.mp4", "wb") as fp:
+        video_path = ".result_output/input_video.mp4"
+        with open(video_path, "wb") as fp:
             fp.write(video_bytes)
-        video = torchvision.io.VideoReader(".result_output/input_video.mp4", stream='video')
-        if app.state.args['DEBUG_MODE']:
-            print(video.get_metadata())
-        video.set_current_stream('video')
-        
-        fourcc = cv2.VideoWriter_fourcc(*'XVID')
-        out = cv2.VideoWriter(".result_output/output_video.mp4", fourcc, 24.0, (1280,720))
-        for frame in video:
-            img = frame['data']
-            # img.to(model_args['Device'])
-            img = torch.permute(img, (1, 2, 0))
-            img = ProcessImage(img, app.state.args, model_args)
+        # sound
+        clip = VideoFileClip(video_path)
+        audio_data = clip.audio
 
-            out.write(img)
-        out.release()
+        cap = cv2.VideoCapture(video_path)
+        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+        width = int(cap.get(3))
+        height = int(cap.get(4))
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        out = cv2.VideoWriter('.result_output/out_video.mp4', fourcc, fps, (width, height))
+        # frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         
+        id_name = {}
+        start = time()
+        while True:
+            ret, img = cap.read()
+            # Color channel: BGR
+            if ret:
+                if app.state.args['DO_TRACKING']:
+                    img, id_name = ProcessVideo(img, app.state.args, model_args, id_name)
+                else:
+                    img = ProcessImage(img, app.state.args, model_args)
+                out.write(img)
+            else:
+                break
+
+        cap.release()
+        out.release()
+
+        # sound
+        video = VideoFileClip('.result_output/out_video.mp4')
+        output = video.set_audio(audio_data)
+        output.write_videofile('.result_output/output_video.mp4')
+
+        print(f'original video fps: {fps}')
+        print(f'time: {time() - start}')
+        print('done.')
+
         product = DetectionResult(result="Success")
         products.append(product)
     # =================== Video =======================
