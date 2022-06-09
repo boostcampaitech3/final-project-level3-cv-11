@@ -8,6 +8,7 @@ def get_embeddings(resnet, img, bboxes, device, size=256, save_path=None):
     unknown_embeddings = resnet(faces).detach().cpu()
     return faces, unknown_embeddings
 
+
 def recognizer(face_db, unknown_embeddings, recog_thr) : 
     face_ids = []
     probs = []

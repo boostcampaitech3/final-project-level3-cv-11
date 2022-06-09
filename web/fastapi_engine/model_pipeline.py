@@ -24,7 +24,7 @@ def init_model_args(args, model_detection=None, model_recognition=None, algo_tra
             face_db = load_face_db(".assets/sample_input/test_images2",
                                      face_db_path, 
                                      device, args, model_args)
-
+            
             model_args['Face_db'] = face_db
             
             if args["DO_TRACKING"]:
@@ -69,8 +69,9 @@ def ProcessVideo(img, args, model_args, id_name):
     if len(outputs) > 0:
         bbox_xyxy = outputs[:, :4]
         identities = outputs[:, -1]
+
         if identities[-1] not in id_name.keys(): # Update가 생기면
-            id_name, probs = ML.Recognition(img, bbox_xyxy, args, model_args, id_name, identities)                                       
+            id_name, probs = ML.Recognition(img, bbox_xyxy, args, model_args, id_name, identities)
 
         processed_img = Mosaic(img, bbox_xyxy, identities, 10, id_name)
     

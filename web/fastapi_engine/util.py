@@ -17,25 +17,28 @@ def imresample(img, sz):
 
 
 def crop_resize(img, box, image_size):
+    if not isinstance(image_size, tuple):
+        image_size = (image_size, image_size)
+
     if isinstance(img, np.ndarray):
         img = img[box[1]:box[3], box[0]:box[2]]
         out = cv2.resize(
             img,
-            (image_size, image_size),
+            image_size,
             interpolation=cv2.INTER_AREA
         ).copy()
     elif isinstance(img, torch.Tensor):
         img = img[box[1]:box[3], box[0]:box[2]]
         out = imresample(
             img.permute(2, 0, 1).unsqueeze(0).float(),
-            (image_size, image_size)
+            image_size
         ).byte().squeeze(0).permute(1, 2, 0)
     else:
-        out = img.crop(box).copy().resize((image_size, image_size), Image.BILINEAR)
+        out = img.crop(box).copy().resize(image_size, Image.BILINEAR)
     return out
 
 
-def CropRoiImg(img, bboxes, image_size, save_path):
+def CropRoiImg(img, bboxes, image_size, save_path=None):
     # Crop image 저장 옵션 -> 중간에 unknown face의 데이터를 뽑아야할 때 씀
     # bbox에 맞춰 crop, output size 조절 옵션
     # batch mode 고려

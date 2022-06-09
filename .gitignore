@@ -5,6 +5,7 @@
 .assets/.ssl_certificates/*.pem
 
 # 출력 결과
+.result_output/cam/*
 .result_output/*.mp4
 .result_output/*.jpg
 .result_output/*.jpeg
@@ -15,10 +16,6 @@
 
 # 작업 중인 폴더
 face_process/
-
-# 개인 사진
-.assets/sample_input/test_images2/seokyong/*
-
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,venv,jupyternotebooks,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,venv,jupyternotebooks,visualstudiocode
