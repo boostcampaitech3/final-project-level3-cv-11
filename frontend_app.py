@@ -79,4 +79,4 @@ else: # if st.session_state.authenticated:
     st.title("MOFY: MOsaic For You")
     
     # The main app
-    app.run()
+    app.run(st.session_state)

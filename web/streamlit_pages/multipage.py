@@ -49,7 +49,9 @@ class MultiPage:
                 "function": func
             })
 
-    def run(self):
+    def run(self, parent_state):
+        st.session_state.username = parent_state.username # 상속
+        
         # Drodown to select the page to run
         with st.sidebar:
             page = st.selectbox(
@@ -89,9 +91,9 @@ class MultiPage:
             
             if page["title"] == "샘플 페이지":
                 st.session_state.process_target = None
-            elif page["title"] in ("얼굴 정보 등록", "이미지 모자이크 처리", "웹캠 모자이크 처리"):
+            elif page["title"] in ("얼굴 정보 등록", "이미지 모자이크 처리"):
                 st.session_state.process_target = "img"
-            elif page["title"] == "비디오 모자이크 처리":
+            elif page["title"] in ("비디오 모자이크 처리", "웹캠 모자이크 처리"):
                 st.session_state.process_target = "vid"
             else:
                 raise ValueError(page["title"])
@@ -108,7 +110,7 @@ class MultiPage:
                 st.text(debug_string)
 
         # run the app function 
-        page['function']()
+        page['function'](st.session_state)
     
     def observe_session_state_change(self):
         send_request = False

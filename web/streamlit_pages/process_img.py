@@ -9,7 +9,12 @@ from shutil import rmtree
 import streamlit as st
 
 
-def app():
+def app(parent_state):
+    # 상속
+    st.session_state.username = parent_state.username
+    st.session_state.do_mosaic = parent_state.do_mosaic
+    st.session_state.do_stroke = parent_state.do_stroke
+    
     # 타겟 데이터가 이미지인 경우 활성화 되는 페이지
     
     st.text(""); st.text("") # 공백
@@ -36,6 +41,9 @@ def app():
         args = {
             "USERNAME": st.session_state.username,
             "REQUEST_ID": shastr,
+            
+            "DO_MOSAIC": st.session_state.do_mosaic,
+            "DO_STROKE": st.session_state.do_stroke,
 
             "INPUT_FILE_NAME": input_file_name,
             "OUTPUT_FILE_NAME": output_file_name

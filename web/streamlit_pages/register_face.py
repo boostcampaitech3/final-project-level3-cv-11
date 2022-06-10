@@ -33,7 +33,9 @@ class VideoProcessor:
         cv2.imwrite(st.session_state.output_dir + "input.jpg", frame_ndarray)
 
 
-def app():
+def app(parent_state):
+    st.session_state.username = parent_state.username # 상속
+    
     # DB에 얼굴 사진을 등록
     if "target_type" not in st.session_state:
         st.session_state.target_type = None # 초기값
@@ -81,7 +83,7 @@ def app():
             if st.button("캡쳐!", on_click=VideoProcessor.save_current_frame):
                 input_file_name = st.session_state.output_dir + "input.jpg"
         
-        if os.path.exists(input_file_name):
+        if os.path.exists(st.session_state.output_dir):
             st.text(""); st.text("") # 공백
             st.markdown("###### 데이터 처리 결과")
             

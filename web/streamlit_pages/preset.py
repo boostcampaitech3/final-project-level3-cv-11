@@ -1,7 +1,7 @@
 import streamlit as st
 
 
-def app():
+def app(parent_state):
     # 예시 샘플 페이지
     if "target_type" not in st.session_state:
         st.session_state.target_type = None

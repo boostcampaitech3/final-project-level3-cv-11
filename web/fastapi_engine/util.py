@@ -83,7 +83,8 @@ def Mosaic(img, bboxes, identities, n, id_name=None):
     # n: kernel size
 
     for bbox, face_id in zip(bboxes, identities):
-        if id_name:
+        # if id_name:
+        if id_name and face_id in id_name: 
             face_id = id_name[face_id]
 
         if face_id == 'unknown':

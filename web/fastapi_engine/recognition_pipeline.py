@@ -47,7 +47,8 @@ def recognizer(face_db, unknown_embeddings, recog_thr) :
 # Recognition
 def deepsort_recognizer(face_db, unknown_embeddings, recog_thr, id_name, identities):
     if len(face_db.keys()) == 0:
-        id_name = ['unknown'] * len(unknown_embeddings)
+        for id_ in identities:
+            id_name[id_] = 'unknown'
         probs = [0] * len(unknown_embeddings)
         return id_name, probs
     

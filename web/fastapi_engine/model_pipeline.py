@@ -68,10 +68,12 @@ def ProcessImage(img, args, model_args):
     face_ids, probs, _ = ML.Recognition(img, bboxes, args, model_args)
 
     # Mosaic
-    processed_img = Mosaic(img, bboxes, face_ids, n=10)
+    if args["DO_MOSAIC"]:
+        processed_img = Mosaic(img, bboxes, face_ids, n=10)
 
     # 특정인에 bbox와 name을 보여주고 싶으면
-    processed_img = DrawRectImg(processed_img, bboxes, face_ids)
+    if args["DO_STROKE"]:
+        processed_img = DrawRectImg(processed_img, bboxes, face_ids)
 
     return processed_img
 
@@ -101,10 +103,12 @@ def ProcessVideo(img, args, model_args, id_name):
             # 모든 대상이 unknown tag일 경우
             id_name, probs, face_embedding = ML.Recognition(img, bbox_xyxy, args, model_args, id_name, identities, reset=True)
 
-        processed_img = Mosaic(img, bbox_xyxy, identities, 10, id_name)
+        if args["DO_MOSAIC"]:
+            processed_img = Mosaic(img, bbox_xyxy, identities, 10, id_name)
     
         # 특정인에 bbox와 name을 보여주고 싶으면
-        # processed_img = DrawRectImg(processed_img, bbox_xyxy, identities, id_name)
+        if args["DO_STROKE"]:
+            processed_img = DrawRectImg(processed_img, bbox_xyxy, identities, id_name)
     else:
         processed_img = img
     
