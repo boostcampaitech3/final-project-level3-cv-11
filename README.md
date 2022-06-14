@@ -6,9 +6,9 @@
 
 
 ## 멤버
-| 김영운 | 이승현 | 임서현 | 전성휴 | 허석용 |  
+| [김영운](https://github.com/Cronople) | [이승현](https://github.com/sseunghyuns) | [임서현](https://github.com/seohl16) | [전성휴](https://github.com/shhommychon) | [허석용](https://github.com/HeoSeokYong) |  
 | :-: | :-: | :-: | :-: | :-: |  
-|[Github](https://github.com/Cronople) | [Github](https://github.com/sseunghyuns) | [Github](https://github.com/seohl16) | [Github](https://github.com/shhommychon) | [Github](https://github.com/HeoSeokYong)
+|<img src="https://avatars.githubusercontent.com/u/57852025?v=4" width=350>|<img src="https://avatars.githubusercontent.com/u/63924704?v=4" width=350> |<img src="https://avatars.githubusercontent.com/u/68208055?v=4" width=350> | <img src="https://avatars.githubusercontent.com/u/38153357?v=4" width=350> |<img src="https://avatars.githubusercontent.com/u/67945696?v=4" width=350>
 
 
 ## Project Overview 
@@ -40,30 +40,44 @@
 ![inbang](src/inbang.webp)
 
 
-## Flow Chart
-![flowchart1](src/flowchart1.jpeg)
+## System Architecture
+<p align="center">
+<img src=src/system_architecture1.png width="1000" />
+</p>
+
+1. *Add Face Data* : 식별화 대상의 얼굴 영역을 embedding하여 데이터베이스화
+2. *Select Process* Target : 이미지, 비디오, 웹캠 등 target을 결정
+3. *Face Detection* : 이미지/영상 내 사람의 얼굴 탐지 
+4. *Face Recognition*: 탐지된 얼굴을 식별 인물 데이터와 비교하여 일치도 검사
+5. *Face Tracking*: 실시간 처리와 예측 오차를 줄이기 위해 이전 프레임의 정보를 활용하여 인물 식별 기능 강화 
+6. *Mosaic* : 등록된 인물과 일치하는 대상을 제외한 인원에 대해 비식별화 처리
+
+## Dataset 
+- Detection Model 학습데이터 - **WIDERFACE**
+  - 전체 3만장의 얼굴 이미지, 총 39만 명의 얼굴 라벨 
+- Recognition Model 학습 데이터 - **VGGFace2**
+  - 전체 331만장의 얼굴 이미지, 9131 classes
+- 검증 데이터셋 (**AI-Hub 장면 인식·인물 인식을 위한 방송 영상 데이터셋 & AFD**)
 
 
 ## Model 
-![model_pipeline](src/model_pipeline.png)
 
+<p align="center">
+<img src=src/model_pipeline.png width="800" />
+</p>
 
-- Face Embedding : 식별화 대상의 얼굴 영역을 embedding하여 데이터베이스화
-- Face Detection : 영상 내 사람의 얼굴 탐지 
-- Face Recognition: 탐지된 얼굴을 식별 인물 데이터와 비교하여 일치도 검사
-- Face Blurring: 등록된 인물과 일치하는 대상을 제외한 인원에 대해 비식별화 처리
-- Face Tracking: 실시간 처리와 예측 오차를 줄이기 위해 이전 프레임의 정보를 활용하여 인물 식별 기능 강화 
+> 모델 파이프라인 
 
-<br/>
-
-### 하나의 이미지에 대한 비식별화 과정
 
 <p align="center">
 <img src=src/modelflow.jpg width="1000" />
 </p>
 
+> 하나의 이미지에 대한 비식별화 과정
 
-## 추가 발전 방향
+
+
+## Future Works
 - 모바일 앱 환경에서도 서비스를 제공. 
 - 자동차 표지판 등 다른 부문에서 개인정보가 침해될 수 있는 정보도 비식별화.
 
