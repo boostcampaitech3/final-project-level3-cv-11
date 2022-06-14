@@ -14,7 +14,9 @@
 
 ## Project Overview 
 ### 목표
-<img src="https://github.com/boostcampaitech3/final-project-level3-cv-11/blob/main/src/MOPY_Logo.png?raw=true" alt="img" style="zoom:75%;" />
+<p align="center">
+<img src=src/MOPY_Logo.png style="zoom:75%;" />
+</p>
 웹서비스를 기반으로 사진이나 동영상, 실시간 영상에서 유저가 등록, 지정한 특정 인물들 이외의 사람들의 얼굴을 AI로 비식별화 처리해주는 초상권 보호 솔루션(Mosaic for you,  MOFY)을 제공하고자 한다.
 실시간 영상에서도 지연이 적고 강력한 보호 솔루션이 프로젝트의 핵심 목표이다.
 
