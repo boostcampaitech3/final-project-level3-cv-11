@@ -55,4 +55,4 @@ def app(parent_state):
             col2.header("Result")
             col2.video(output_file_name)
 
-            rmtree(st.session_state.output_dir)
+            # rmtree(st.session_state.output_dir)

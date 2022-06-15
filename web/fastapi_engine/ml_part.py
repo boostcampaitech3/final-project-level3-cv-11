@@ -58,7 +58,7 @@ def Recognition(img, bboxes, args, model_args, id_name=None, identities=None, re
     device = model_args['Device']
     faces_embeddings = Faces_embeddings()
 
-    if args['PROCESS_TARGET'] == 'img' or not args['DO_TRACKING']:
+    if id_name is None: # args['PROCESS_TARGET'] == 'img' or not args['DO_TRACKING']:
         faces, unknown_embeddings = get_embeddings(model_args['Recognition'], img, bboxes, device)
         # if args["WHICH_DETECTOR"] == "MTCNN":
         #     faces, unknown_embeddings = mtcnn_get_embeddings(model_args['Detection'], model_args['Recognition'], img, bboxes, device)

@@ -39,25 +39,28 @@ def app(parent_state):
         st.text("") # 공백
         
         if st.session_state.target_type == "ex1":
-            st.markdown("**소요 시간** : 00초")
+            st.markdown("**DB 등록 얼굴 수** : 1명")
+            st.markdown("**소요 시간** : 0.079초")
             
             col1, col2 = st.columns(2) # markdown 이전에 있어야 글이 위로 감
             col1.header("Original")
-            col1.image(".assets/sample_input/examples/example1/example_input1.png")
+            col1.image(".assets/sample_input/examples/example1/example_input1.jpg")
             col2.header("Result")
-            col2.image(".assets/sample_input/examples/example1/example_output1.png")
+            col2.image(".assets/sample_input/examples/example1/example_output1.jpeg")
             
         elif st.session_state.target_type == "ex2":
-            st.markdown("**소요 시간** : 00초")
+            st.markdown("**DB 등록 얼굴 수** : 2명")
+            st.markdown("**소요 시간** : 0.225초")
             
             col1, col2 = st.columns(2) # markdown 이전에 있어야 글이 위로 감
             col1.header("Original")
-            col1.image(".assets/sample_input/examples/example2/example_input2.png")
+            col1.image(".assets/sample_input/examples/example2/example_input2.jpg")
             col2.header("Result")
-            col2.image(".assets/sample_input/examples/example2/example_output2.png")
+            col2.image(".assets/sample_input/examples/example2/example_output2.jpeg")
             
         elif st.session_state.target_type == "ex3":
-            st.markdown("**소요 시간** : 00초")
+            st.markdown("**DB 등록 얼굴 수** : 1명")
+            st.markdown("**소요 시간** : 25.52초")
             
             col1, col2 = st.columns(2) # markdown 이전에 있어야 글이 위로 감
             col1.header("Original")
@@ -66,7 +69,8 @@ def app(parent_state):
             col2.video(".assets/sample_input/examples/example3/example_output3.mp4")
             
         elif st.session_state.target_type == "ex4":
-            st.markdown("**소요 시간** : 00초")
+            st.markdown("**DB 등록 얼굴 수** : 2명")
+            st.markdown("**소요 시간** : 34.29초")
             
             col1, col2 = st.columns(2) # markdown 이전에 있어야 글이 위로 감
             col1.header("Original")
