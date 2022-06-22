@@ -1,8 +1,7 @@
 # MOFY: MOsaic For You 실시간 불특정 인물 비식별화
-<p align="center">
 <img src=src/song_gif.gif width="600" />
-</p>
-- 송중기 클립 출처: 연예가중계 게릴라 데이트 (KBS2 예능)
+
+> 송중기 클립 출처: 연예가중계 게릴라 데이트 (KBS2 예능)
 배우 송중기를 제외한 모든 인물 비식별화 결과 (식별 대상에 박스 처리)
 
 
@@ -30,20 +29,20 @@
 ## Demo 
 
 1. 축구선수 손흥민을 제외한 모든 인물 비식별화 결과 (식별 대상에 박스 처리)
-- [손흥민 클립 출처: 손세이셔널 – 그를 만든 시간 (tvN 시사/교양)]
+> [손흥민 클립 출처: 손세이셔널 – 그를 만든 시간 (tvN 시사/교양)]
 
-<img src=src/son.webp width="600" />
+<img src=src/son_gif.gif width="600" />
 
 
 2. 뉴스에서 기자와 인터뷰이를 제외한 모든 인물 비식별화 결과
-- [뉴스 클립 출처: NEWS A 성혜란 팩트맨 인터뷰(Channel A)]
+> [뉴스 클립 출처: NEWS A 성혜란 팩트맨 인터뷰(Channel A)]
 
-<img src=src/interview.webp width="600" />
+<img src=src/interview_gif.gif width="600" />
 
 3. 인터넷 방송에서 방송자와 인터뷰이를 제외한 모든 인물 비식별화 결과
-- [유튜브 클립 출처: afreeca TV BJ 남순 NS 유튜브 (Youtube)]
+> [유튜브 클립 출처: afreeca TV BJ 남순 NS 유튜브 (Youtube)]
 
-<img src=src/inbang.webp width="600" />
+<img src=src/inbang_gif.gif width="600" />
 
 ## System Architecture
 <p align="center">
